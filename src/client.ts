@@ -113,6 +113,9 @@ export class PortalsMarketClient {
   private readonly rateLimiter: RateLimiter;
 
   constructor(config: PortalsClientConfig) {
+    if (!config.token) {
+      throw new Error("PortalsMarketClient: token is required");
+    }
     this.token = config.token;
     this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
     this.fetch = config.fetch ?? globalThis.fetch.bind(globalThis);
@@ -330,7 +333,7 @@ export class PortalsMarketClient {
     return this.get(
       "/partners/market/actions/",
       MarketActionsResponseSchema,
-      params ? this.serializeParams(params) : undefined,
+      params,
     );
   }
 
@@ -398,7 +401,7 @@ export class PortalsMarketClient {
     return this.get(
       "/partners/nfts/owned",
       OwnedNftsResponseSchema,
-      params ? this.serializeParams(params) : undefined,
+      params,
       { key: "nfts/owned", limit: 6 },
     );
   }
@@ -413,7 +416,7 @@ export class PortalsMarketClient {
     return this.get(
       "/partners/nfts/search",
       SearchNftsResponseSchema,
-      params ? this.serializeParams(params) : undefined,
+      params,
       { key: "nfts/search", limit: 15 },
     );
   }
@@ -518,7 +521,7 @@ export class PortalsMarketClient {
     return this.get(
       "/partners/users/actions",
       UserActionsResponseSchema,
-      params ? this.serializeParams(params) : undefined,
+      params,
     );
   }
 

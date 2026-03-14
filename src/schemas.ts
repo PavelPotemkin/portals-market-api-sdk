@@ -204,22 +204,22 @@ export const SortOrderSchema = z.nativeEnum(SortOrder);
 // ── Models ──
 
 export const HttpErrorSchema = z.object({
-  message: z.string().optional(),
+  message: z.string().optional().nullable(),
 });
 
 export const NftAttributeSchema = z.object({
   type: NftAttributeTypeSchema,
   value: z.string(),
   rarity_per_mille: z.number(),
-  floor: z.string().optional(),
+  floor: z.string().optional().nullable(),
 });
 
 export const UserSchema = z.object({
-  name: z.string().optional(),
-  username: z.string().optional(),
+  name: z.string().optional().nullable(),
+  username: z.string().optional().nullable(),
   is_influencer: z.boolean(),
   referral_level: z.number(),
-  referrer_id: z.number().optional(),
+  referrer_id: z.number().optional().nullable(),
 });
 
 export const BundleNftDetailsSchema = z.object({
@@ -228,8 +228,8 @@ export const BundleNftDetailsSchema = z.object({
   photo_url: z.string(),
   external_collection_number: z.number(),
   status: NftStatusSchema,
-  collection_floor_price: z.string().optional(),
-  tg_id: z.string().optional(),
+  collection_floor_price: z.string().optional().nullable(),
+  tg_id: z.string().optional().nullable(),
 });
 
 export const BundleNftSchema = z.object({
@@ -246,48 +246,48 @@ export const BundleExtendedSchema = z.object({
   nfts_count: z.number(),
   floor_price: z.string(),
   created_at: z.string(),
-  price: z.string().optional(),
-  is_owned: z.boolean().optional(),
+  price: z.string().optional().nullable(),
+  is_owned: z.boolean().optional().nullable(),
 });
 
 export const PremarketOrderSchema: z.ZodType<{
-  id?: string;
-  nft_id?: string;
-  seller_id?: number;
-  buyer_id?: number;
-  price?: string;
-  deposit_amount?: string;
-  deposit_percent?: number;
-  status?: string;
-  created_at?: string;
-  listed_at?: string;
-  sold_at?: string;
-  updated_at?: string;
-  transfer_deadline?: string;
-  unlock_date?: string;
-  warning_until?: string;
-  seller?: z.infer<typeof UserSchema>;
-  buyer?: z.infer<typeof UserSchema>;
-  nft?: unknown;
+  id?: string | null;
+  nft_id?: string | null;
+  seller_id?: number | null;
+  buyer_id?: number | null;
+  price?: string | null;
+  deposit_amount?: string | null;
+  deposit_percent?: number | null;
+  status?: string | null;
+  created_at?: string | null;
+  listed_at?: string | null;
+  sold_at?: string | null;
+  updated_at?: string | null;
+  transfer_deadline?: string | null;
+  unlock_date?: string | null;
+  warning_until?: string | null;
+  seller?: z.infer<typeof UserSchema> | null;
+  buyer?: z.infer<typeof UserSchema> | null;
+  nft?: unknown | null;
 }> = z.object({
-  id: z.string().optional(),
-  nft_id: z.string().optional(),
-  seller_id: z.number().optional(),
-  buyer_id: z.number().optional(),
-  price: z.string().optional(),
-  deposit_amount: z.string().optional(),
-  deposit_percent: z.number().optional(),
-  status: PremarketOrderStatusSchema.optional(),
-  created_at: z.string().optional(),
-  listed_at: z.string().optional(),
-  sold_at: z.string().optional(),
-  updated_at: z.string().optional(),
-  transfer_deadline: z.string().optional(),
-  unlock_date: z.string().optional(),
-  warning_until: z.string().optional(),
-  seller: UserSchema.optional(),
-  buyer: UserSchema.optional(),
-  nft: z.lazy(() => NftModelSchema).optional(),
+  id: z.string().optional().nullable(),
+  nft_id: z.string().optional().nullable(),
+  seller_id: z.number().optional().nullable(),
+  buyer_id: z.number().optional().nullable(),
+  price: z.string().optional().nullable(),
+  deposit_amount: z.string().optional().nullable(),
+  deposit_percent: z.number().optional().nullable(),
+  status: PremarketOrderStatusSchema.optional().nullable(),
+  created_at: z.string().optional().nullable(),
+  listed_at: z.string().optional().nullable(),
+  sold_at: z.string().optional().nullable(),
+  updated_at: z.string().optional().nullable(),
+  transfer_deadline: z.string().optional().nullable(),
+  unlock_date: z.string().optional().nullable(),
+  warning_until: z.string().optional().nullable(),
+  seller: UserSchema.optional().nullable(),
+  buyer: UserSchema.optional().nullable(),
+  nft: z.lazy(() => NftModelSchema).optional().nullable(),
 });
 
 export const NftModelSchema = z.object({
@@ -298,20 +298,20 @@ export const NftModelSchema = z.object({
   external_collection_number: z.number(),
   status: NftStatusSchema,
   attributes: z.array(NftAttributeSchema),
-  price: z.string().optional(),
-  listed_at: z.string().optional(),
-  floor_price: z.string().optional(),
-  animation_url: z.string().optional(),
-  has_animation: z.boolean().optional(),
-  emoji_id: z.string().optional(),
-  tg_id: z.string().optional(),
-  ton_address: z.string().optional(),
-  bundle_id: z.number().optional(),
-  is_crafted: z.boolean().optional(),
-  import_source: NftImportSourceSchema.optional(),
-  imported_at: z.string().optional(),
-  unlocks_at: z.string().optional(),
-  premarket_data: PremarketOrderSchema.optional(),
+  price: z.string().optional().nullable(),
+  listed_at: z.string().optional().nullable(),
+  floor_price: z.string().optional().nullable(),
+  animation_url: z.string().optional().nullable(),
+  has_animation: z.boolean().optional().nullable(),
+  emoji_id: z.string().optional().nullable(),
+  tg_id: z.string().optional().nullable(),
+  ton_address: z.string().optional().nullable(),
+  bundle_id: z.number().optional().nullable(),
+  is_crafted: z.boolean().optional().nullable(),
+  import_source: NftImportSourceSchema.optional().nullable(),
+  imported_at: z.string().optional().nullable(),
+  unlocks_at: z.string().optional().nullable(),
+  premarket_data: PremarketOrderSchema.optional().nullable(),
 });
 
 export const HttpNftSchema = NftModelSchema.extend({
@@ -327,44 +327,44 @@ export const AttributeFloorsMapSchema = z.object({
 });
 
 export const CollectionSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().optional().nullable(),
   name: z.string(),
   photo_url: z.string(),
-  short_name: z.string().optional(),
-  floor_price: z.string().optional(),
-  day_volume: z.string().optional(),
-  market_cap: z.string().optional(),
-  supply: z.number().optional(),
-  is_premarket: z.boolean().optional(),
-  is_crafted: z.boolean().optional(),
-  created_at: z.string().optional(),
-  unlocks_in: z.string().optional(),
+  short_name: z.string().optional().nullable(),
+  floor_price: z.string().optional().nullable(),
+  day_volume: z.string().optional().nullable(),
+  market_cap: z.string().optional().nullable(),
+  supply: z.number().optional().nullable(),
+  is_premarket: z.boolean().optional().nullable(),
+  is_crafted: z.boolean().optional().nullable(),
+  created_at: z.string().optional().nullable(),
+  unlocks_in: z.string().optional().nullable(),
 });
 
 export const CollectionAssetSchema = z.object({
   name: z.string(),
   url: z.string(),
-  rarity_per_mille: z.number().optional(),
-  crafted_rarity: z.string().optional(),
+  rarity_per_mille: z.number().optional().nullable(),
+  crafted_rarity: z.string().optional().nullable(),
 });
 
 export const CollectionWithPreviewSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().optional().nullable(),
   name: z.string(),
-  photo_url: z.string().optional(),
-  short_name: z.string().optional(),
-  floor_price: z.string().optional(),
-  day_volume: z.string().optional(),
-  supply: z.string().optional(),
-  preview: CollectionAssetSchema.optional(),
+  photo_url: z.string().optional().nullable(),
+  short_name: z.string().optional().nullable(),
+  floor_price: z.string().optional().nullable(),
+  day_volume: z.string().optional().nullable(),
+  supply: z.string().optional().nullable(),
+  preview: CollectionAssetSchema.optional().nullable(),
 });
 
 export const CollectionMetricsSchema = z.object({
   collection_id: z.string(),
   avg_price: z.string(),
   total_volume: z.string(),
-  floor_price: z.string().optional(),
-  interval_time: z.string().optional(),
+  floor_price: z.string().optional().nullable(),
+  interval_time: z.string().optional().nullable(),
 });
 
 export const CollectionOfferSchema = z.object({
@@ -377,30 +377,30 @@ export const CollectionOfferSchema = z.object({
   status: CollectionOfferStatusSchema,
   created_at: z.string(),
   updated_at: z.string(),
-  expires_at: z.string().optional(),
+  expires_at: z.string().optional().nullable(),
 });
 
 export const CollectionOfferInfoSchema = z.object({
-  name: z.string().optional(),
-  short_name: z.string().optional(),
-  photo_url: z.string().optional(),
-  floor_price: z.string().optional(),
-  is_premarket: z.boolean().optional(),
-  unlocks_in: z.string().optional(),
+  name: z.string().optional().nullable(),
+  short_name: z.string().optional().nullable(),
+  photo_url: z.string().optional().nullable(),
+  floor_price: z.string().optional().nullable(),
+  is_premarket: z.boolean().optional().nullable(),
+  unlocks_in: z.string().optional().nullable(),
 });
 
 export const CollectionOfferItemSchema = z.object({
-  id: z.string().optional(),
-  collection_id: z.string().optional(),
-  sender_id: z.number().optional(),
-  amount: z.string().optional(),
-  max_nfts: z.number().optional(),
-  current_nfts: z.number().optional(),
-  status: z.string().optional(),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
-  expires_at: z.string().optional(),
-  collection: CollectionOfferInfoSchema.optional(),
+  id: z.string().optional().nullable(),
+  collection_id: z.string().optional().nullable(),
+  sender_id: z.number().optional().nullable(),
+  amount: z.string().optional().nullable(),
+  max_nfts: z.number().optional().nullable(),
+  current_nfts: z.number().optional().nullable(),
+  status: CollectionOfferStatusSchema.optional().nullable(),
+  created_at: z.string().optional().nullable(),
+  updated_at: z.string().optional().nullable(),
+  expires_at: z.string().optional().nullable(),
+  collection: CollectionOfferInfoSchema.optional().nullable(),
 });
 
 export const UserActionNftSchema = z.object({
@@ -410,23 +410,23 @@ export const UserActionNftSchema = z.object({
   collection_id: z.string(),
   external_collection_number: z.number(),
   is_owned: z.boolean(),
-  price: z.string().optional(),
-  floor_price: z.string().optional(),
-  status: z.string().optional(),
-  animation_url: z.string().optional(),
-  has_animation: z.boolean().optional(),
-  emoji_id: z.string().optional(),
-  is_crafted: z.boolean().optional(),
-  ton_address: z.string().optional(),
-  unlocks_at: z.string().optional(),
-  attributes: z.array(NftAttributeSchema).optional(),
+  price: z.string().optional().nullable(),
+  floor_price: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  animation_url: z.string().optional().nullable(),
+  has_animation: z.boolean().optional().nullable(),
+  emoji_id: z.string().optional().nullable(),
+  is_crafted: z.boolean().optional().nullable(),
+  ton_address: z.string().optional().nullable(),
+  unlocks_at: z.string().optional().nullable(),
+  attributes: z.array(NftAttributeSchema).optional().nullable(),
 });
 
 export const UserActionOfferSchema = z.object({
   price: z.string(),
   status: z.string(),
-  sender_id: z.number().optional(),
-  recipient_id: z.number().optional(),
+  sender_id: z.number().optional().nullable(),
+  recipient_id: z.number().optional().nullable(),
 });
 
 export const UserActionCollectionOfferSchema = z.object({
@@ -434,34 +434,34 @@ export const UserActionCollectionOfferSchema = z.object({
   name: z.string(),
   photo_url: z.string(),
   short_name: z.string(),
-  floor_price: z.string().optional(),
+  floor_price: z.string().optional().nullable(),
 });
 
 export const AnonymizedUserActionSchema = z.object({
   type: UserActionTypeSchema,
   created_at: z.string(),
-  amount: z.string().optional(),
-  offer_id: z.string().optional(),
-  nft: UserActionNftSchema.optional(),
-  bundle: BundleExtendedSchema.optional(),
+  amount: z.string().optional().nullable(),
+  offer_id: z.string().optional().nullable(),
+  nft: UserActionNftSchema.optional().nullable(),
+  bundle: BundleExtendedSchema.optional().nullable(),
 });
 
 export const DetailedUserActionSchema = z.object({
   type: UserActionTypeSchema,
   collection_id: z.string(),
-  amount: z.string().optional(),
-  nft_id: z.string().optional(),
-  offer_id: z.string().optional(),
-  created_at: z.string().optional(),
-  initiator_user_id: z.number().optional(),
-  target_user_id: z.number().optional(),
-  max_nfts: z.number().optional(),
-  referrer_revenue: z.string().optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-  nft: UserActionNftSchema.optional(),
-  offer: UserActionOfferSchema.optional(),
-  collection: UserActionCollectionOfferSchema.optional(),
-  bundle: BundleExtendedSchema.optional(),
+  amount: z.string().optional().nullable(),
+  nft_id: z.string().optional().nullable(),
+  offer_id: z.string().optional().nullable(),
+  created_at: z.string().optional().nullable(),
+  initiator_user_id: z.number().optional().nullable(),
+  target_user_id: z.number().optional().nullable(),
+  max_nfts: z.number().optional().nullable(),
+  referrer_revenue: z.string().optional().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+  nft: UserActionNftSchema.optional().nullable(),
+  offer: UserActionOfferSchema.optional().nullable(),
+  collection: UserActionCollectionOfferSchema.optional().nullable(),
+  bundle: BundleExtendedSchema.optional().nullable(),
 });
 
 export const BuyDetailSchema = z.object({
@@ -471,52 +471,52 @@ export const BuyDetailSchema = z.object({
 
 export const NftPriceDetailSchema = z.object({
   nft_id: z.string(),
-  price: z.string().optional(),
+  price: z.string().optional().nullable(),
 });
 
 export const PurchaseResultSchema = z.object({
-  id: z.string().optional(),
-  status: z.string().optional(),
-  price: z.string().optional(),
-  reason: z.string().optional(),
-  error_message: z.string().optional(),
-  nft: NftModelSchema.optional(),
+  id: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  price: z.string().optional().nullable(),
+  reason: z.string().optional().nullable(),
+  error_message: z.string().optional().nullable(),
+  nft: NftModelSchema.optional().nullable(),
 });
 
 export const InvalidNftDetailSchema = z.object({
-  id: z.string().optional(),
-  reason: InvalidNftReasonSchema.optional(),
-  nft: NftModelSchema.optional(),
+  id: z.string().optional().nullable(),
+  reason: InvalidNftReasonSchema.optional().nullable(),
+  nft: NftModelSchema.optional().nullable(),
 });
 
 export const UpdatedNftDetailSchema = z.object({
-  id: z.string().optional(),
-  old_price: z.string().optional(),
-  current_price: z.string().optional(),
-  status: NftStatusSchema.optional(),
-  nft: NftModelSchema.optional(),
+  id: z.string().optional().nullable(),
+  old_price: z.string().optional().nullable(),
+  current_price: z.string().optional().nullable(),
+  status: NftStatusSchema.optional().nullable(),
+  nft: NftModelSchema.optional().nullable(),
 });
 
 export const BulkListingFailedNftSchema = z.object({
-  nft_id: z.string().optional(),
-  reason: z.string().optional(),
+  nft_id: z.string().optional().nullable(),
+  reason: z.string().optional().nullable(),
 });
 
 export const TransferFailedItemSchema = z.object({
-  nft_id: z.string().optional(),
-  reason: z.string().optional(),
+  nft_id: z.string().optional().nullable(),
+  reason: z.string().optional().nullable(),
 });
 
 export const TransferRecipientInfoSchema = z.object({
-  user_id: z.number().optional(),
-  username: z.string().optional(),
+  user_id: z.number().optional().nullable(),
+  username: z.string().optional().nullable(),
 });
 
 export const WithdrawalStatusSchema = z.object({
   id: z.number(),
   status: WithdrawalStatusValueSchema,
-  nft_id: z.string().optional(),
-  details: z.string().optional(),
+  nft_id: z.string().optional().nullable(),
+  details: z.string().optional().nullable(),
 });
 
 export const TonWithdrawalStatusItemSchema = z.object({
@@ -595,20 +595,20 @@ export const WithdrawTonRequestSchema = z.object({
 export const CreateOfferResponseSchema = CollectionOfferSchema;
 
 export const FetchOfferCollectionsResponseSchema = z.object({
-  collections: z.array(CollectionSchema).optional(),
-  total_count: z.number().optional(),
+  collections: z.array(CollectionSchema).optional().nullable(),
+  total_count: z.number().optional().nullable(),
 });
 
 export const FetchTopOffersResponseSchema = z.object({
-  offers: z.array(CollectionOfferItemSchema).optional(),
-  total_count: z.number().optional(),
+  offers: z.array(CollectionOfferItemSchema).optional().nullable(),
+  total_count: z.number().optional().nullable(),
 });
 
 export const TopCollectionOfferResponseSchema = CollectionOfferItemSchema;
 
 export const AttributeFloorsResponseSchema = z.object({
-  models: z.array(AttributeFloorInfoSchema).optional(),
-  attribute_floors: CollectionAttrFloorPricesSchema.optional(),
+  models: z.array(AttributeFloorInfoSchema).optional().nullable(),
+  attribute_floors: CollectionAttrFloorPricesSchema.optional().nullable(),
   updated_at: z.string(),
 });
 
@@ -621,15 +621,15 @@ export const ModelBackgroundFloorsResponseSchema = z.object({
 });
 
 export const CollectionsPreviewResponseSchema = z.object({
-  collections: z.array(CollectionWithPreviewSchema).optional(),
+  collections: z.array(CollectionWithPreviewSchema).optional().nullable(),
 });
 
 export const CollectionMetricsResponseSchema = z.object({
-  history: z.array(CollectionMetricsSchema).optional(),
+  history: z.array(CollectionMetricsSchema).optional().nullable(),
 });
 
 export const GenerateDepositIdResponseSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().optional().nullable(),
 });
 
 export const MarketActionsResponseSchema = z.object({
@@ -638,7 +638,7 @@ export const MarketActionsResponseSchema = z.object({
 
 export const MarketConfigResponseSchema = z.object({
   commission: z.string(),
-  cooldown: z.string(),
+  cooldown: z.union([z.string(), z.number()]),
   deposit_wallet: z.string(),
   rub_course: z.string(),
   usd_course: z.string(),
@@ -646,29 +646,29 @@ export const MarketConfigResponseSchema = z.object({
 });
 
 export const BuyPartialResponseSchema = z.object({
-  total_requested: z.number().optional(),
-  total_purchased: z.number().optional(),
-  total_failed: z.number().optional(),
-  total_spent: z.string().optional(),
-  purchase_results: z.array(PurchaseResultSchema).optional(),
-  invalid_nfts: z.array(InvalidNftDetailSchema).optional(),
-  updated_nfts: z.array(UpdatedNftDetailSchema).optional(),
+  total_requested: z.number().optional().nullable(),
+  total_purchased: z.number().optional().nullable(),
+  total_failed: z.number().optional().nullable(),
+  total_spent: z.string().optional().nullable(),
+  purchase_results: z.array(PurchaseResultSchema).optional().nullable(),
+  invalid_nfts: z.array(InvalidNftDetailSchema).optional().nullable(),
+  updated_nfts: z.array(UpdatedNftDetailSchema).optional().nullable(),
 });
 
 export const BulkListingResultResponseSchema = z.object({
-  successful_nfts: z.array(z.string()).optional(),
-  failed_nfts: z.array(BulkListingFailedNftSchema).optional(),
+  successful_nfts: z.array(z.string()).optional().nullable(),
+  failed_nfts: z.array(BulkListingFailedNftSchema).optional().nullable(),
 });
 
 export const OwnedNftsResponseSchema = z.object({
   nfts: z.array(HttpNftSchema),
-  total_count: z.number().optional(),
-  attribute_floors: AttributeFloorsMapSchema.optional(),
+  total_count: z.number().optional().nullable(),
+  attribute_floors: AttributeFloorsMapSchema.optional().nullable(),
 });
 
 export const SearchNftsResponseSchema = z.object({
-  results: z.array(HttpNftSchema).optional(),
-  total_count: z.number().optional(),
+  results: z.array(HttpNftSchema).optional().nullable(),
+  total_count: z.number().optional().nullable(),
 });
 
 export const NftStatsResponseSchema = z.object({
@@ -677,9 +677,9 @@ export const NftStatsResponseSchema = z.object({
 });
 
 export const TransferGiftsResponseSchema = z.object({
-  transferred_count: z.number().optional(),
-  recipient: TransferRecipientInfoSchema.optional(),
-  failed_items: z.array(TransferFailedItemSchema).optional(),
+  transferred_count: z.number().optional().nullable(),
+  recipient: TransferRecipientInfoSchema.optional().nullable(),
+  failed_items: z.array(TransferFailedItemSchema).optional().nullable(),
 });
 
 export const WithdrawGiftsResponseSchema = z.object({
@@ -691,12 +691,12 @@ export const WithdrawalStatusesResponseSchema = z.object({
 });
 
 export const CheckUserExistsResponseSchema = z.object({
-  exists: z.boolean().optional(),
+  exists: z.boolean().optional().nullable(),
 });
 
 export const UserActionsResponseSchema = z.object({
   actions: z.array(DetailedUserActionSchema),
-  total_actions: z.number().optional(),
+  total_actions: z.number().optional().nullable(),
 });
 
 export const WalletInfoResponseSchema = z.object({

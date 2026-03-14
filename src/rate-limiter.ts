@@ -15,8 +15,12 @@ export class RateLimiter {
       return { allowed: true, retryAfterMs: 0 };
     }
 
-    while (timestamps.length > 0 && now - timestamps[0] >= 1000) {
-      timestamps.shift();
+    const cutoff = now - 1000;
+    const firstValid = timestamps.findIndex((t) => t > cutoff);
+    if (firstValid === -1) {
+      timestamps.length = 0;
+    } else if (firstValid > 0) {
+      timestamps.splice(0, firstValid);
     }
 
     if (timestamps.length >= limit) {

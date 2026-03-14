@@ -26,16 +26,20 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix"
   },
-  "peerDependencies": {
-    "zod": "^3.0.0"
+  "dependencies": {
+    "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.3",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^4.1.0",
-    "zod": "^3.24.0"
+    "typescript-eslint": "^8.57.0",
+    "vitest": "^4.1.0"
   },
   "license": "MIT"
 }
