@@ -1,0 +1,3863 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Partners API for NFT marketplace integration.\n\nAuthorization header format: partners <token>\n\n**Rate Limits**\n\nA global limit of 25 req/s applies to all endpoints. Individual endpoints may have stricter limits:\n\n| Endpoint | Limit |\n|---|---|\n| GET /nfts/search | 15 req/s * |\n| GET /nfts/owned | 6 req/s |\n| GET /collections/floors | 9 req/s |\n| GET /collections/backdrops/floors | 2 req/s |\n| GET /collections/models/backgrounds/floors | 3 req/s |\n| GET /collections/attribute-floors | 5 req/s |\n| GET /collections/{id}/metrics | 8 req/s |\n| GET /collection-offers/{id}/top | 10 req/s * |\n| GET /collection-offers/{id}/all | 10 req/s * |\n\n\\* Can be increased on request. Contact support to adjust your rate limit.",
+    "title": "Portals Partners API",
+    "contact": {},
+    "version": "1.0.0"
+  },
+  "host": "portal-market.com",
+  "basePath": "/",
+  "paths": {
+    "/partners/collection-offers/": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Create an offer to buy NFTs from a specific collection. Funds will be frozen until offer is accepted or cancelled",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collection-offers"
+        ],
+        "summary": "Create a new collection offer",
+        "parameters": [
+          {
+            "description": "Collection offer details",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/httptrustedapps.CreateOfferRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/model.CollectionOffer"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/collection-offers/cancel": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Cancel your own collection offer and return frozen funds",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collection-offers"
+        ],
+        "summary": "Cancel a collection offer",
+        "parameters": [
+          {
+            "description": "Collection offer ID",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/httptrustedapps.CancelOfferRequest"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/collection-offers/collections": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns list of collections that support collection offers",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collection-offers"
+        ],
+        "summary": "Get collections available for offers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/collectionoffer.FetchCollectionsOut"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/collection-offers/{collection_id}/all": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns top active offers for a collection, sorted by amount descending. Rate limit: 10 req/s (can be increased on request).",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collection-offers"
+        ],
+        "summary": "Get top collection offers (up to 10)",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Collection ID",
+            "name": "collection_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "description": "Limit (default 10, max 10)",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dtocollectionoffers.FetchTopOut"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/collection-offers/{collection_id}/top": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns the highest active offer for a specific collection. Rate limit: 10 req/s (can be increased on request).",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collection-offers"
+        ],
+        "summary": "Get top collection offer",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Collection ID",
+            "name": "collection_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/dtocollectionoffers.CollectionOfferItem"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/collection-offers/{offer_id}/accept": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Accept an offer by providing NFT IDs to sell. NFTs must belong to the offer's collection",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collection-offers"
+        ],
+        "summary": "Accept a collection offer",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Collection Offer ID",
+            "name": "offer_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Accept offer request",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/httptrustedapps.AcceptOfferRequest"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/collections/attribute-floors": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns floor prices for all unique model attributes across collections. Rate limit: 5 req/s.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collection-filters"
+        ],
+        "summary": "Get all unique attribute floor prices",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/collection.FetchAllUniqueAttributeFloorsOut"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/collections/backdrops/floors": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns minimum listing prices grouped by backdrop type. Rate limit: 2 req/s.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collection-filters"
+        ],
+        "summary": "Get floor prices for common backgrounds",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/collection.FetchBackgroundFloorPricesOut"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/collections/floors": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns minimum listing prices for each collection. Rate limit: 9 req/s.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collection-filters"
+        ],
+        "summary": "Get floor prices for all collections",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/collection.FetchBackgroundFloorPricesOut"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/collections/models/backgrounds/floors": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns minimum listing prices for backdrops of specified models. Rate limit: 3 req/s.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collection-filters"
+        ],
+        "summary": "Get background floor prices for specific models",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "comma-separated list of model names",
+            "name": "models",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/collection.FetchModelsBackgroundsFloorPricesOut"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/collections/preview": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns all collections with preview images and basic info. No pagination",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collections"
+        ],
+        "summary": "Get all collections with preview",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "sort field (name, floor_price)",
+            "name": "sort_by",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "sort order (asc|desc)",
+            "name": "sort_order",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/collection.FetchAllCollectionsWithPreviewOut"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/collections/{collection_id}/metrics": {
+      "get": {
+        "description": "Returns historical data for a collection including volume and average prices. Rate limit: 8 req/s.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collection"
+        ],
+        "summary": "Get collection metrics history",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Collection ID (UUID format)",
+            "name": "collection_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "group_by",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/collection.FetchCollectionMetricsOut"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/partners/deposits": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Generate a unique deposit ID for TON deposits. Use this ID in transaction memo",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "deposit"
+        ],
+        "summary": "Generate deposit ID for user",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/userwallet.GenerateDepositIdOut"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/market/actions/": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns recent market actions (buys, sells, listings, etc.) with optional filters",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "market"
+        ],
+        "summary": "Get market activity",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "bundle_offer",
+                "bundle_purchase",
+                "bundle_bundled",
+                "bundle_separated",
+                "sell",
+                "buy",
+                "offer",
+                "listing",
+                "price_update",
+                "delist",
+                "transfer",
+                "cancel",
+                "reject"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "action_types",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "collection_id",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "collection_ids",
+            "in": "query"
+          },
+          {
+            "minimum": 1,
+            "type": "integer",
+            "name": "external_collection_number",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "filter_by_backdrops",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "filter_by_models",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "filter_by_symbols",
+            "in": "query"
+          },
+          {
+            "maximum": 20,
+            "minimum": 1,
+            "type": "integer",
+            "default": 20,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "max_price",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "min_price",
+            "in": "query"
+          },
+          {
+            "maximum": 700,
+            "minimum": 0,
+            "type": "integer",
+            "default": 0,
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "seven_days",
+              "fourteen_days",
+              "one_month"
+            ],
+            "type": "string",
+            "name": "period",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "listed_at desc",
+              "price asc",
+              "price desc",
+              "external_collection_number asc",
+              "external_collection_number desc",
+              "model_rarity asc",
+              "model_rarity desc",
+              "created_at asc",
+              "created_at desc",
+              "id desc",
+              "id asc"
+            ],
+            "type": "string",
+            "name": "sort_by",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "listed",
+              "unlisted"
+            ],
+            "type": "string",
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/usersactions.FetchAllUserActionsOut"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/market/config": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns market settings including commission rate, deposit wallet, and current TON/USDT rate",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "market"
+        ],
+        "summary": "Get market configuration",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/httptrustedapps.generalOut"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/nfts": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Attempts to purchase multiple NFTs. Returns detailed results including successful purchases and failed attempts with reasons. Supports partial purchases - if some NFTs are invalid or unaffordable, others will still be purchased.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "nfts"
+        ],
+        "summary": "Buy NFTs with partial purchase support",
+        "parameters": [
+          {
+            "description": "body params",
+            "name": "request",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/nft.BuyPartialIn"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/nft.BuyPartialOut"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/nfts/bulk-list": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Put multiple NFTs on sale with individual prices in a single request",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "nfts"
+        ],
+        "summary": "Bulk list NFTs for sale",
+        "parameters": [
+          {
+            "description": "Array of NFT IDs with individual prices",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/nft.BulkListForSaleIn"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/nft.BulkListingResult"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/nfts/bulk-unlist": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Remove multiple NFTs from sale in a single request",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "nfts"
+        ],
+        "summary": "Bulk delist NFTs from sale",
+        "parameters": [
+          {
+            "description": "Array of NFT IDs to delist",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/nft.BulkDelistIn"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/nft.BulkListingResult"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/nfts/owned": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns NFTs owned by the authenticated user with optional filters. Rate limit: 6 req/s.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "nfts"
+        ],
+        "summary": "Get NFTs owned by user",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "collection_id",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "collection_ids",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "exclude_bundled",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "external_collection_number",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "filter_by_backdrops",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "filter_by_models",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "filter_by_symbols",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "ids",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "all",
+              "crafted",
+              "not_crafted"
+            ],
+            "type": "string",
+            "name": "is_crafted_status",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "is_owned",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "max_price",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "min_price",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "all",
+              "minted",
+              "not_minted"
+            ],
+            "type": "string",
+            "name": "mint_status",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "name_filter",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "all",
+              "only_premarket",
+              "without_premarket",
+              "draft",
+              "listed",
+              "sold"
+            ],
+            "type": "string",
+            "name": "premarket_status",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "listed_at desc",
+              "price asc",
+              "price desc",
+              "external_collection_number asc",
+              "external_collection_number desc",
+              "model_rarity asc",
+              "model_rarity desc",
+              "name asc",
+              "name desc"
+            ],
+            "type": "string",
+            "name": "sort_by",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "listed",
+              "unlisted"
+            ],
+            "type": "string",
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "tg_ids",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "with_attribute_floors",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "with_attributes",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/httptrustedapps.fetchOwnedOut"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/nfts/search": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Search NFTs with various filters - by name, price range, and attributes. Rate limit: 15 req/s (can be increased on request).",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "nfts"
+        ],
+        "summary": "Search NFTs by name with filters",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "collection_id",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "collection_ids",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "exclude_bundled",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "external_collection_number",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "filter_by_backdrops",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "filter_by_models",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "filter_by_symbols",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "ids",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "all",
+              "crafted",
+              "not_crafted"
+            ],
+            "type": "string",
+            "name": "is_crafted_status",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "is_owned",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "max_price",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "min_price",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "all",
+              "minted",
+              "not_minted"
+            ],
+            "type": "string",
+            "name": "mint_status",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "name_filter",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "all",
+              "only_premarket",
+              "without_premarket",
+              "draft",
+              "listed",
+              "sold"
+            ],
+            "type": "string",
+            "name": "premarket_status",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "listed_at desc",
+              "price asc",
+              "price desc",
+              "external_collection_number asc",
+              "external_collection_number desc",
+              "model_rarity asc",
+              "model_rarity desc",
+              "name asc",
+              "name desc"
+            ],
+            "type": "string",
+            "name": "sort_by",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "listed",
+              "unlisted"
+            ],
+            "type": "string",
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "tg_ids",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "with_attribute_floors",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "with_attributes",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/httptrustedapps.searchNftsOut"
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/nfts/stats": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns counts of total, listed, and unlisted NFTs for the authenticated user",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "nfts"
+        ],
+        "summary": "Get user NFT statistics",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/nft.FetchUserStatsOut"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/nfts/transfer": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Transfer NFTs (gifts) from the current user to another user by username or telegram ID. Supports anonymous transfer (no notification sent)",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "nfts"
+        ],
+        "summary": "Transfer gifts to another user",
+        "parameters": [
+          {
+            "description": "Transfer gifts request",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/nft.TransferGiftsIn"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transfer result",
+            "schema": {
+              "$ref": "#/definitions/nft.TransferGiftsOut"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "404": {
+            "description": "Recipient not found",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/nfts/withdraw": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Send NFT gifts to user's Telegram account. Returns withdrawal IDs to track status",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "nfts"
+        ],
+        "summary": "Withdraw multiple gifts to user account",
+        "parameters": [
+          {
+            "description": "Withdraw gifts request",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/nft.WithdrawGiftsIn"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/nft.WithdrawGiftsOut"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/nfts/withdrawals/statuses": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Check the status of pending or completed gift withdrawals",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "nfts"
+        ],
+        "summary": "Get withdrawal statuses",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "collectionFormat": "csv",
+            "name": "ids",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/nft.WithdrawalStatusesOut"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/nfts/{nft_id}/list": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Put a single NFT on sale at the specified price",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "nfts"
+        ],
+        "summary": "List NFT for sale",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "NFT ID (UUID format)",
+            "name": "nft_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Listing parameters including price",
+            "name": "request",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/nft.ListForSaleIn"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/nfts/{nft_id}/unlist": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Remove a single NFT from sale",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "nfts"
+        ],
+        "summary": "Delist NFT from sale",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "NFT ID (UUID format)",
+            "name": "nft_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/users/actions": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns actions of the authenticated partner user (purchases, sales, listings, etc.). Useful for tracking when gifts are sold.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "market"
+        ],
+        "summary": "Get user actions",
+        "operationId": "partnersGetUserActions",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "bundle_offer",
+                "bundle_purchase",
+                "bundle_bundled",
+                "bundle_separated",
+                "sell",
+                "buy",
+                "offer",
+                "listing",
+                "price_update",
+                "delist",
+                "transfer",
+                "cancel",
+                "reject"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "action_types",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "collection_id",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "collection_ids",
+            "in": "query"
+          },
+          {
+            "minimum": 1,
+            "type": "integer",
+            "name": "external_collection_number",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "filter_by_backdrops",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "filter_by_models",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "filter_by_symbols",
+            "in": "query"
+          },
+          {
+            "maximum": 20,
+            "minimum": 1,
+            "type": "integer",
+            "default": 20,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "max_price",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "min_price",
+            "in": "query"
+          },
+          {
+            "maximum": 700,
+            "minimum": 0,
+            "type": "integer",
+            "default": 0,
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "seven_days",
+              "fourteen_days",
+              "one_month"
+            ],
+            "type": "string",
+            "name": "period",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "listed_at desc",
+              "price asc",
+              "price desc",
+              "external_collection_number asc",
+              "external_collection_number desc",
+              "model_rarity asc",
+              "model_rarity desc",
+              "created_at asc",
+              "created_at desc",
+              "id desc",
+              "id asc"
+            ],
+            "type": "string",
+            "name": "sort_by",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "listed",
+              "unlisted"
+            ],
+            "type": "string",
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/usersactions.FetchUserActionsOut"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/users/wallets/": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Returns wallet balance and deposit address for the authenticated user",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "users_wallets"
+        ],
+        "summary": "Get user wallet info",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/userwallet.InfoOut"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/users/wallets/withdraw": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Withdraw TON balance to an external wallet address",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "users_wallets"
+        ],
+        "summary": "Withdraw TON from user wallet",
+        "parameters": [
+          {
+            "description": "Withdrawal details including amount and destination address",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userwallet.WithdrawIn"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/userwallet.WithdrawOut"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/users/wallets/withdrawals/statuses": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Check the status of pending or completed TON withdrawals",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "users_wallets"
+        ],
+        "summary": "Get withdrawal statuses by IDs",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "ids",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/userwallet.WithdrawStatusOut"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/users/{user_id}": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Checks if a user exists by provided Telegram ID.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "users"
+        ],
+        "summary": "Check if user exists",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Telegram ID of the user",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User existence status",
+            "schema": {
+              "$ref": "#/definitions/user.CheckExistenceOut"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "collection.FetchAllCollectionsWithPreviewOut": {
+      "type": "object",
+      "properties": {
+        "collections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/model.CollectionWithPreview"
+          }
+        }
+      }
+    },
+    "collection.FetchAllUniqueAttributeFloorsOut": {
+      "type": "object",
+      "required": [
+        "models",
+        "updated_at"
+      ],
+      "properties": {
+        "attribute_floors": {
+          "$ref": "#/definitions/dtocollectionfiltersrepo.FetchCollectionAttrFloorPricesOut"
+        },
+        "models": {
+          "description": "Deprecated parameter do not use it instead of this use attribute_floors field",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dtocollectionfiltersrepo.AttributeFloorInfo"
+          }
+        },
+        "updated_at": {
+          "type": "string"
+        }
+      }
+    },
+    "collection.FetchBackgroundFloorPricesOut": {
+      "type": "object",
+      "required": [
+        "floorPrices"
+      ],
+      "properties": {
+        "floorPrices": {
+          "$ref": "#/definitions/model.AttributeFloorPrices"
+        }
+      }
+    },
+    "collection.FetchCollectionMetricsOut": {
+      "type": "object",
+      "properties": {
+        "history": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/model.CollectionMetrics"
+          }
+        }
+      }
+    },
+    "collection.FetchModelsBackgroundsFloorPricesOut": {
+      "type": "object",
+      "required": [
+        "model_backgrounds"
+      ],
+      "properties": {
+        "model_backgrounds": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/model.AttributeFloorPrices"
+          }
+        }
+      }
+    },
+    "collectionoffer.FetchCollectionsOut": {
+      "type": "object",
+      "properties": {
+        "collections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/model.Collection"
+          }
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "dtocollectionfiltersrepo.AttributeFloorInfo": {
+      "type": "object",
+      "required": [
+        "collection_name",
+        "floor_price",
+        "name"
+      ],
+      "properties": {
+        "collection_name": {
+          "type": "string"
+        },
+        "floor_price": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "dtocollectionfiltersrepo.FetchCollectionAttrFloorPricesOut": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "backdrops",
+          "models",
+          "symbols"
+        ],
+        "properties": {
+          "backdrops": {
+            "$ref": "#/definitions/model.AttributeFloorPrices"
+          },
+          "models": {
+            "$ref": "#/definitions/model.AttributeFloorPrices"
+          },
+          "symbols": {
+            "$ref": "#/definitions/model.AttributeFloorPrices"
+          }
+        }
+      }
+    },
+    "dtocollectionoffers.CollectionInfo": {
+      "type": "object",
+      "properties": {
+        "floor_price": {
+          "description": "TODO: implement",
+          "type": "string"
+        },
+        "is_premarket": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "photo_url": {
+          "type": "string"
+        },
+        "short_name": {
+          "type": "string"
+        },
+        "unlocks_in": {
+          "type": "string"
+        }
+      }
+    },
+    "dtocollectionoffers.CollectionOfferItem": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "collection": {
+          "$ref": "#/definitions/dtocollectionoffers.CollectionInfo"
+        },
+        "collection_id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "current_nfts": {
+          "type": "integer"
+        },
+        "expires_at": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "max_nfts": {
+          "type": "integer"
+        },
+        "sender_id": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        }
+      }
+    },
+    "dtocollectionoffers.FetchTopOut": {
+      "type": "object",
+      "properties": {
+        "offers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dtocollectionoffers.CollectionOfferItem"
+          }
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "dwithdrawalsrepo.FetchStatusByIdOut": {
+      "type": "object",
+      "required": [
+        "id",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/model.TonWithdrawalStatus"
+        }
+      }
+    },
+    "exerr.HttpError": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "httpmodel.Nft": {
+      "type": "object",
+      "required": [
+        "attributes",
+        "collection_id",
+        "external_collection_number",
+        "id",
+        "is_owned",
+        "name",
+        "photo_url",
+        "status"
+      ],
+      "properties": {
+        "animation_url": {
+          "type": "string"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/model.NftAttribute"
+          }
+        },
+        "bundle_id": {
+          "type": "integer"
+        },
+        "collection_id": {
+          "type": "string"
+        },
+        "emoji_id": {
+          "type": "string"
+        },
+        "external_collection_number": {
+          "type": "integer"
+        },
+        "floor_price": {
+          "type": "string"
+        },
+        "has_animation": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": "string"
+        },
+        "import_source": {
+          "$ref": "#/definitions/model.NftImportSource"
+        },
+        "imported_at": {
+          "type": "string"
+        },
+        "is_crafted": {
+          "type": "boolean"
+        },
+        "is_owned": {
+          "type": "boolean"
+        },
+        "listed_at": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "photo_url": {
+          "type": "string"
+        },
+        "premarket_data": {
+          "$ref": "#/definitions/model.PremarketOrder"
+        },
+        "price": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/model.NftStatus"
+        },
+        "tg_id": {
+          "type": "string"
+        },
+        "ton_address": {
+          "type": "string"
+        },
+        "unlocks_at": {
+          "type": "string"
+        }
+      }
+    },
+    "httptrustedapps.AcceptOfferRequest": {
+      "type": "object",
+      "required": [
+        "amount",
+        "nft_ids"
+      ],
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "nft_ids": {
+          "type": "array",
+          "maxItems": 50,
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "httptrustedapps.CancelOfferRequest": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "httptrustedapps.CreateOfferRequest": {
+      "type": "object",
+      "required": [
+        "amount",
+        "collection_id",
+        "max_nfts"
+      ],
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "collection_id": {
+          "type": "string"
+        },
+        "expiration_days": {
+          "type": "integer"
+        },
+        "max_nfts": {
+          "type": "integer",
+          "maximum": 50,
+          "minimum": 1
+        }
+      }
+    },
+    "httptrustedapps.fetchOwnedOut": {
+      "type": "object",
+      "required": [
+        "nfts"
+      ],
+      "properties": {
+        "attribute_floors": {
+          "$ref": "#/definitions/nft.AttributeFloorsMap"
+        },
+        "nfts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/httpmodel.Nft"
+          }
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "httptrustedapps.generalOut": {
+      "type": "object",
+      "required": [
+        "commission",
+        "cooldown",
+        "deposit_wallet",
+        "rub_course",
+        "usd_course",
+        "user_cashback"
+      ],
+      "properties": {
+        "commission": {
+          "type": "string"
+        },
+        "cooldown": {
+          "type": "string"
+        },
+        "deposit_wallet": {
+          "type": "string"
+        },
+        "rub_course": {
+          "type": "string"
+        },
+        "usd_course": {
+          "type": "string"
+        },
+        "user_cashback": {
+          "type": "string"
+        }
+      }
+    },
+    "httptrustedapps.searchNftsOut": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/httpmodel.Nft"
+          }
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "model.AnonymizedUserAction": {
+      "type": "object",
+      "required": [
+        "created_at",
+        "type"
+      ],
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "bundle": {
+          "$ref": "#/definitions/model.BundleExtended"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "nft": {
+          "$ref": "#/definitions/model.UserActionNft"
+        },
+        "offer_id": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/model.UserActionType"
+        }
+      }
+    },
+    "model.AttributeFloorPrices": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "model.BundleExtended": {
+      "type": "object",
+      "required": [
+        "created_at",
+        "floor_price",
+        "id",
+        "nfts",
+        "nfts_count",
+        "status"
+      ],
+      "properties": {
+        "created_at": {
+          "type": "string"
+        },
+        "floor_price": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "is_owned": {
+          "type": "boolean"
+        },
+        "nfts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/model.BundleNft"
+          }
+        },
+        "nfts_count": {
+          "type": "integer"
+        },
+        "price": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/model.BundleStatus"
+        }
+      }
+    },
+    "model.BundleNft": {
+      "type": "object",
+      "required": [
+        "added_at",
+        "bundle_id",
+        "nft",
+        "position"
+      ],
+      "properties": {
+        "added_at": {
+          "type": "string"
+        },
+        "bundle_id": {
+          "type": "integer"
+        },
+        "nft": {
+          "$ref": "#/definitions/model.BundleNftDetails"
+        },
+        "position": {
+          "type": "integer"
+        }
+      }
+    },
+    "model.BundleNftDetails": {
+      "type": "object",
+      "required": [
+        "external_collection_number",
+        "id",
+        "name",
+        "photo_url",
+        "status"
+      ],
+      "properties": {
+        "collection_floor_price": {
+          "type": "string"
+        },
+        "external_collection_number": {
+          "type": "integer"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "photo_url": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "listed",
+            "unlisted"
+          ],
+          "allOf": [
+            {
+              "$ref": "#/definitions/model.NftStatus"
+            }
+          ]
+        },
+        "tg_id": {
+          "type": "string"
+        }
+      }
+    },
+    "model.BundleStatus": {
+      "type": "string",
+      "enum": [
+        "listed",
+        "unlisted",
+        "separated"
+      ],
+      "x-enum-varnames": [
+        "BundleStatusListed",
+        "BundleStatusUnlisted",
+        "BundleStatusSeparated"
+      ]
+    },
+    "model.Collection": {
+      "type": "object",
+      "required": [
+        "name",
+        "photo_url"
+      ],
+      "properties": {
+        "created_at": {
+          "type": "string"
+        },
+        "day_volume": {
+          "type": "string"
+        },
+        "floor_price": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "is_crafted": {
+          "type": "boolean"
+        },
+        "is_premarket": {
+          "type": "boolean"
+        },
+        "market_cap": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "photo_url": {
+          "type": "string"
+        },
+        "short_name": {
+          "type": "string"
+        },
+        "supply": {
+          "type": "integer"
+        },
+        "unlocks_in": {
+          "type": "string"
+        }
+      }
+    },
+    "model.CollectionAsset": {
+      "type": "object",
+      "required": [
+        "name",
+        "url"
+      ],
+      "properties": {
+        "crafted_rarity": {
+          "description": "legendary, epic, rare, uncommon",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "rarity_per_mille": {
+          "type": "number"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "model.CollectionMetrics": {
+      "type": "object",
+      "required": [
+        "avg_price",
+        "collection_id",
+        "total_volume"
+      ],
+      "properties": {
+        "avg_price": {
+          "type": "string"
+        },
+        "collection_id": {
+          "type": "string"
+        },
+        "floor_price": {
+          "type": "string"
+        },
+        "interval_time": {
+          "type": "string"
+        },
+        "total_volume": {
+          "type": "string"
+        }
+      }
+    },
+    "model.CollectionOffer": {
+      "type": "object",
+      "required": [
+        "amount",
+        "collection_id",
+        "created_at",
+        "current_nfts",
+        "id",
+        "max_nfts",
+        "sender_id",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "collection_id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "current_nfts": {
+          "type": "integer"
+        },
+        "expires_at": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "max_nfts": {
+          "type": "integer"
+        },
+        "sender_id": {
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/definitions/model.CollectionOfferStatus"
+        },
+        "updated_at": {
+          "type": "string"
+        }
+      }
+    },
+    "model.CollectionOfferStatus": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "rejected",
+        "canceled"
+      ],
+      "x-enum-varnames": [
+        "CollectionOfferPendingStatus",
+        "CollectionOfferCompletedStatus",
+        "CollectionOfferRejectedStatus",
+        "CollectionOfferCanceledStatus"
+      ]
+    },
+    "model.CollectionWithPreview": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "day_volume": {
+          "type": "string"
+        },
+        "floor_price": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "photo_url": {
+          "type": "string"
+        },
+        "preview": {
+          "$ref": "#/definitions/model.CollectionAsset"
+        },
+        "short_name": {
+          "type": "string"
+        },
+        "supply": {
+          "type": "string"
+        }
+      }
+    },
+    "model.DetailedUserAction": {
+      "type": "object",
+      "required": [
+        "collection_id",
+        "type"
+      ],
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "bundle": {
+          "$ref": "#/definitions/model.BundleExtended"
+        },
+        "collection": {
+          "$ref": "#/definitions/model.UserActionCollectionOffer"
+        },
+        "collection_id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "initiator_user_id": {
+          "type": "integer"
+        },
+        "max_nfts": {
+          "type": "integer"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "nft": {
+          "$ref": "#/definitions/model.UserActionNft"
+        },
+        "nft_id": {
+          "type": "string"
+        },
+        "offer": {
+          "$ref": "#/definitions/model.UserActionOffer"
+        },
+        "offer_id": {
+          "type": "string"
+        },
+        "referrer_revenue": {
+          "type": "string"
+        },
+        "target_user_id": {
+          "type": "integer"
+        },
+        "type": {
+          "$ref": "#/definitions/model.UserActionType"
+        }
+      }
+    },
+    "model.Nft": {
+      "type": "object",
+      "required": [
+        "attributes",
+        "collection_id",
+        "external_collection_number",
+        "id",
+        "name",
+        "photo_url",
+        "status"
+      ],
+      "properties": {
+        "animation_url": {
+          "type": "string"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/model.NftAttribute"
+          }
+        },
+        "bundle_id": {
+          "type": "integer"
+        },
+        "collection_id": {
+          "type": "string"
+        },
+        "emoji_id": {
+          "type": "string"
+        },
+        "external_collection_number": {
+          "type": "integer"
+        },
+        "floor_price": {
+          "type": "string"
+        },
+        "has_animation": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": "string"
+        },
+        "import_source": {
+          "$ref": "#/definitions/model.NftImportSource"
+        },
+        "imported_at": {
+          "type": "string"
+        },
+        "is_crafted": {
+          "type": "boolean"
+        },
+        "listed_at": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "photo_url": {
+          "type": "string"
+        },
+        "premarket_data": {
+          "$ref": "#/definitions/model.PremarketOrder"
+        },
+        "price": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/model.NftStatus"
+        },
+        "tg_id": {
+          "type": "string"
+        },
+        "ton_address": {
+          "type": "string"
+        },
+        "unlocks_at": {
+          "type": "string"
+        }
+      }
+    },
+    "model.NftAttribute": {
+      "type": "object",
+      "required": [
+        "rarity_per_mille",
+        "type",
+        "value"
+      ],
+      "properties": {
+        "floor": {
+          "type": "string"
+        },
+        "rarity_per_mille": {
+          "type": "number"
+        },
+        "type": {
+          "enum": [
+            "model",
+            "backdrop",
+            "symbol"
+          ],
+          "allOf": [
+            {
+              "$ref": "#/definitions/model.NftAttributeType"
+            }
+          ]
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "model.NftAttributeType": {
+      "type": "string",
+      "enum": [
+        "model",
+        "backdrop",
+        "symbol"
+      ],
+      "x-enum-varnames": [
+        "NftAttributeTypeModel",
+        "NftAttributeTypeBackdrop",
+        "NftAttributeTypeSymbol"
+      ]
+    },
+    "model.NftImportSource": {
+      "type": "string",
+      "enum": [
+        "bot",
+        "user_bot"
+      ],
+      "x-enum-varnames": [
+        "NftImportSourceBot",
+        "NftImportSourceUserBot"
+      ]
+    },
+    "model.NftStatus": {
+      "type": "string",
+      "enum": [
+        "listed",
+        "unlisted",
+        "withdrawn",
+        "auction",
+        "giveaway_locked",
+        "bundle",
+        "deleted"
+      ],
+      "x-enum-varnames": [
+        "NftListedStatus",
+        "NftUnlistedStatus",
+        "NftWithdrawnStatus",
+        "NftAuctionStatus",
+        "NftGiveawayLockedStatus",
+        "NftBundleStatus",
+        "NftDeletedStatus"
+      ]
+    },
+    "model.PremarketOrder": {
+      "type": "object",
+      "properties": {
+        "buyer": {
+          "$ref": "#/definitions/model.User"
+        },
+        "buyer_id": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "deposit_amount": {
+          "type": "string"
+        },
+        "deposit_percent": {
+          "type": "number"
+        },
+        "id": {
+          "type": "string"
+        },
+        "listed_at": {
+          "type": "string"
+        },
+        "nft": {
+          "$ref": "#/definitions/model.Nft"
+        },
+        "nft_id": {
+          "type": "string"
+        },
+        "price": {
+          "type": "string"
+        },
+        "seller": {
+          "$ref": "#/definitions/model.User"
+        },
+        "seller_id": {
+          "type": "integer"
+        },
+        "sold_at": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/model.PremarketOrderStatus"
+        },
+        "transfer_deadline": {
+          "type": "string"
+        },
+        "unlock_date": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        },
+        "warning_until": {
+          "type": "string"
+        }
+      }
+    },
+    "model.PremarketOrderStatus": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "listed",
+        "sold",
+        "transferring",
+        "completed",
+        "cancelled",
+        "expired",
+        "failed",
+        "hidden",
+        "deleted"
+      ],
+      "x-enum-comments": {
+        "PremarketOrderStatusCancelled": "order cancelled by seller",
+        "PremarketOrderStatusCompleted": "transfer completed successfully",
+        "PremarketOrderStatusDeleted": "order soft deleted by seller",
+        "PremarketOrderStatusDraft": "order created but not yet listed",
+        "PremarketOrderStatusExpired": "order expired (past transfer deadline)",
+        "PremarketOrderStatusFailed": "transfer failed",
+        "PremarketOrderStatusHidden": "order hidden from public view",
+        "PremarketOrderStatusListed": "order is active and available for purchase",
+        "PremarketOrderStatusSold": "order has been purchased by a buyer",
+        "PremarketOrderStatusTransferring": "gift is being transferred to buyer"
+      },
+      "x-enum-varnames": [
+        "PremarketOrderStatusDraft",
+        "PremarketOrderStatusListed",
+        "PremarketOrderStatusSold",
+        "PremarketOrderStatusTransferring",
+        "PremarketOrderStatusCompleted",
+        "PremarketOrderStatusCancelled",
+        "PremarketOrderStatusExpired",
+        "PremarketOrderStatusFailed",
+        "PremarketOrderStatusHidden",
+        "PremarketOrderStatusDeleted"
+      ]
+    },
+    "model.TonWithdrawalStatus": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "resolved"
+      ],
+      "x-enum-varnames": [
+        "TonWithdrawalStatusPending",
+        "TonWithdrawalStatusInProgress",
+        "TonWithdrawalStatusResolved"
+      ]
+    },
+    "model.User": {
+      "type": "object",
+      "required": [
+        "is_influencer",
+        "referral_level"
+      ],
+      "properties": {
+        "is_influencer": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "referral_level": {
+          "type": "integer"
+        },
+        "referrer_id": {
+          "type": "integer"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "model.UserActionCollectionOffer": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "photo_url",
+        "short_name"
+      ],
+      "properties": {
+        "floor_price": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "photo_url": {
+          "type": "string"
+        },
+        "short_name": {
+          "type": "string"
+        }
+      }
+    },
+    "model.UserActionNft": {
+      "type": "object",
+      "required": [
+        "collection_id",
+        "external_collection_number",
+        "id",
+        "is_owned",
+        "name",
+        "photo_url"
+      ],
+      "properties": {
+        "animation_url": {
+          "type": "string"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/model.NftAttribute"
+          }
+        },
+        "collection_id": {
+          "type": "string"
+        },
+        "emoji_id": {
+          "type": "string"
+        },
+        "external_collection_number": {
+          "type": "integer"
+        },
+        "floor_price": {
+          "type": "string"
+        },
+        "has_animation": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": "string"
+        },
+        "is_crafted": {
+          "type": "boolean"
+        },
+        "is_owned": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "photo_url": {
+          "type": "string"
+        },
+        "price": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "ton_address": {
+          "type": "string"
+        },
+        "unlocks_at": {
+          "type": "string"
+        }
+      }
+    },
+    "model.UserActionOffer": {
+      "type": "object",
+      "required": [
+        "price",
+        "status"
+      ],
+      "properties": {
+        "price": {
+          "type": "string"
+        },
+        "recipient_id": {
+          "type": "integer"
+        },
+        "sender_id": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "model.UserActionType": {
+      "type": "string",
+      "enum": [
+        "purchase",
+        "offer",
+        "collection_offer",
+        "listing",
+        "price_update",
+        "delist",
+        "reject",
+        "cancel",
+        "transfer",
+        "giveaway_sent",
+        "giveaway_won",
+        "premarket_collateral",
+        "bundle_listing",
+        "bundle_delisting",
+        "bundle_separated",
+        "bundle_bundled",
+        "bundle_purchase",
+        "bundle_offer",
+        "bundle_transfer",
+        "bundle_price_update"
+      ],
+      "x-enum-varnames": [
+        "UserActionTypePurchase",
+        "UserActionOfferType",
+        "UserActionCollectionOfferType",
+        "UserActionListingType",
+        "UserActionPriceUpdateType",
+        "UserActionDelistType",
+        "UserActionRejectType",
+        "UserActionCancelType",
+        "UserActionTransferType",
+        "UserActionGiveawaySentType",
+        "UserActionGiveawayWonType",
+        "UserPremarketCollateralType",
+        "UserActionBundleListingType",
+        "UserActionBundleDelistingType",
+        "UserActionBundleSeparatedType",
+        "UserActionBundleBundledType",
+        "UserActionBundlePurchaseType",
+        "UserActionBundleOfferType",
+        "UserActionBundleTransferType",
+        "UserActionBundlePriceUpdateType"
+      ]
+    },
+    "nft.AttributeFloorsMap": {
+      "type": "object",
+      "required": [
+        "backdrops",
+        "models",
+        "symbols"
+      ],
+      "properties": {
+        "backdrops": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "models": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "symbols": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "nft.BulkDelistIn": {
+      "type": "object",
+      "required": [
+        "nft_ids"
+      ],
+      "properties": {
+        "nft_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "nft.BulkListForSaleIn": {
+      "type": "object",
+      "properties": {
+        "nft_prices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/nft.NftPriceDetail"
+          }
+        }
+      }
+    },
+    "nft.BulkListingResult": {
+      "type": "object",
+      "properties": {
+        "failed_nfts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "nft_id": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "successful_nfts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "nft.BuyDetail": {
+      "type": "object",
+      "required": [
+        "id",
+        "price"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "price": {
+          "type": "string"
+        }
+      }
+    },
+    "nft.BuyPartialIn": {
+      "type": "object",
+      "required": [
+        "nft_details"
+      ],
+      "properties": {
+        "nft_details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/nft.BuyDetail"
+          }
+        }
+      }
+    },
+    "nft.BuyPartialOut": {
+      "type": "object",
+      "properties": {
+        "invalid_nfts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/nft.InvalidNftDetail"
+          }
+        },
+        "purchase_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/nft.PurchaseResult"
+          }
+        },
+        "total_failed": {
+          "type": "integer"
+        },
+        "total_purchased": {
+          "type": "integer"
+        },
+        "total_requested": {
+          "type": "integer"
+        },
+        "total_spent": {
+          "type": "string"
+        },
+        "updated_nfts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/nft.UpdatedNftDetail"
+          }
+        }
+      }
+    },
+    "nft.FetchUserStatsOut": {
+      "type": "object",
+      "required": [
+        "listed_count",
+        "unlisted_count"
+      ],
+      "properties": {
+        "listed_count": {
+          "type": "integer"
+        },
+        "unlisted_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "nft.InvalidNftDetail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "nft": {
+          "$ref": "#/definitions/model.Nft"
+        },
+        "reason": {
+          "$ref": "#/definitions/nft.InvalidNftReason"
+        }
+      }
+    },
+    "nft.InvalidNftReason": {
+      "type": "string",
+      "enum": [
+        "NFT_NOT_FOUND",
+        "NFT_NOT_LISTED",
+        "OWNER_CHANGED",
+        "PRICE_CHANGED",
+        "SELF_PURCHASE",
+        "DUPLICATE_NFT",
+        "BUNDLED_NFT",
+        "NFT_NOT_IMPORTED"
+      ],
+      "x-enum-comments": {
+        "InvalidNftBundled": "NFT is in bundle",
+        "InvalidNftDuplicate": "Duplicate NFT ID in request",
+        "InvalidNftNotFound": "NFT not found in the database",
+        "InvalidNftNotImported": "NFT not imported to Telegram",
+        "InvalidNftNotListed": "NFT is not listed for sale",
+        "InvalidNftOwnerChanged": "NFT owner has changed",
+        "InvalidNftPriceChanged": "NFT price has changed",
+        "InvalidNftSelfPurchase": "Attempt to purchase own NFT"
+      },
+      "x-enum-varnames": [
+        "InvalidNftNotFound",
+        "InvalidNftNotListed",
+        "InvalidNftOwnerChanged",
+        "InvalidNftPriceChanged",
+        "InvalidNftSelfPurchase",
+        "InvalidNftDuplicate",
+        "InvalidNftBundled",
+        "InvalidNftNotImported"
+      ]
+    },
+    "nft.ListForSaleIn": {
+      "type": "object",
+      "properties": {
+        "price": {
+          "type": "string"
+        }
+      }
+    },
+    "nft.NftPriceDetail": {
+      "type": "object",
+      "required": [
+        "nft_id"
+      ],
+      "properties": {
+        "nft_id": {
+          "type": "string"
+        },
+        "price": {
+          "type": "string"
+        }
+      }
+    },
+    "nft.PurchaseResult": {
+      "type": "object",
+      "properties": {
+        "error_message": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "nft": {
+          "$ref": "#/definitions/model.Nft"
+        },
+        "price": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "nft.TransferFailedItem": {
+      "type": "object",
+      "properties": {
+        "nft_id": {
+          "type": "string",
+          "example": "550e8400-e29b-41d4-a716-446655440001"
+        },
+        "reason": {
+          "type": "string",
+          "example": "NFT is locked until 2024-02-15"
+        }
+      }
+    },
+    "nft.TransferGiftsIn": {
+      "type": "object",
+      "required": [
+        "nft_ids",
+        "recipient"
+      ],
+      "properties": {
+        "anonymous": {
+          "type": "boolean",
+          "example": false
+        },
+        "nft_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "recipient": {
+          "type": "string",
+          "example": "username (use only if you do not have it) or telegram_id"
+        }
+      }
+    },
+    "nft.TransferGiftsOut": {
+      "type": "object",
+      "properties": {
+        "failed_items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/nft.TransferFailedItem"
+          }
+        },
+        "recipient": {
+          "$ref": "#/definitions/nft.TransferRecipientInfo"
+        },
+        "transferred_count": {
+          "type": "integer",
+          "example": 2
+        }
+      }
+    },
+    "nft.TransferRecipientInfo": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "integer",
+          "example": 123456789
+        },
+        "username": {
+          "type": "string",
+          "example": "recipient_username"
+        }
+      }
+    },
+    "nft.UpdatedNftDetail": {
+      "type": "object",
+      "properties": {
+        "current_price": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "nft": {
+          "$ref": "#/definitions/model.Nft"
+        },
+        "old_price": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/model.NftStatus"
+        }
+      }
+    },
+    "nft.WithdrawGiftsIn": {
+      "type": "object",
+      "properties": {
+        "gift_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "recipient_id": {
+          "type": "integer"
+        },
+        "unsafe_transfer": {
+          "type": "boolean"
+        }
+      }
+    },
+    "nft.WithdrawGiftsOut": {
+      "type": "object",
+      "required": [
+        "withdrawals_ids"
+      ],
+      "properties": {
+        "withdrawals_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "nft.WithdrawalStatus": {
+      "type": "object",
+      "required": [
+        "id",
+        "status"
+      ],
+      "properties": {
+        "details": {
+          "type": "string",
+          "enum": [
+            "failed to determine withdrawal status",
+            "gift transferred successfully",
+            "gift could not be sent inside app; recipient not registered; gift returned to sender; commission returned to sender",
+            "GiftID is nil",
+            "gift could not be sent inside app; recipient registered; gift returned to recipient; commission returned to recipient",
+            "gift is not on relayer; cannot transfer; write to tech support"
+          ]
+        },
+        "id": {
+          "type": "integer"
+        },
+        "nft_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "completed",
+            "errored",
+            "recovered",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "nft.WithdrawalStatusesOut": {
+      "type": "object",
+      "required": [
+        "statuses"
+      ],
+      "properties": {
+        "statuses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/nft.WithdrawalStatus"
+          }
+        }
+      }
+    },
+    "user.CheckExistenceOut": {
+      "type": "object",
+      "properties": {
+        "exists": {
+          "type": "boolean"
+        }
+      }
+    },
+    "usersactions.FetchAllUserActionsOut": {
+      "type": "object",
+      "required": [
+        "actions"
+      ],
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/model.AnonymizedUserAction"
+          }
+        }
+      }
+    },
+    "usersactions.FetchUserActionsOut": {
+      "type": "object",
+      "required": [
+        "actions"
+      ],
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/model.DetailedUserAction"
+          }
+        },
+        "total_actions": {
+          "type": "integer"
+        }
+      }
+    },
+    "userwallet.GenerateDepositIdOut": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "userwallet.InfoOut": {
+      "type": "object",
+      "required": [
+        "balance",
+        "frozen_funds",
+        "premarket_funds"
+      ],
+      "properties": {
+        "balance": {
+          "type": "string"
+        },
+        "frozen_funds": {
+          "type": "string"
+        },
+        "premarket_funds": {
+          "type": "string"
+        }
+      }
+    },
+    "userwallet.WithdrawIn": {
+      "type": "object",
+      "required": [
+        "amount",
+        "external_address"
+      ],
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "external_address": {
+          "type": "string"
+        }
+      }
+    },
+    "userwallet.WithdrawOut": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "userwallet.WithdrawStatusOut": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dwithdrawalsrepo.FetchStatusByIdOut"
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "ApiKeyAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  }
+}
