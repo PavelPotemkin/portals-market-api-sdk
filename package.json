@@ -1,5 +1,5 @@
 {
-  "name": "@portals/market-sdk",
+  "name": "portals-market-api-sdk",
   "version": "1.0.0",
   "description": "SDK for Portals Partners NFT Marketplace API",
   "type": "module",
@@ -28,7 +28,8 @@
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "lint": "eslint src tests",
-    "lint:fix": "eslint src tests --fix"
+    "lint:fix": "eslint src tests --fix",
+    "prepublishOnly": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "zod": "^3.24.0"
@@ -40,6 +41,10 @@
     "typescript": "^5.0.0",
     "typescript-eslint": "^8.57.0",
     "vitest": "^4.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PavelPotemkin/portals-market-api-sdk.git"
   },
   "license": "MIT"
 }
