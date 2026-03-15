@@ -1,4 +1,4 @@
-# @pavelpotemkin/portals-market-api-sdk
+# portals-market-api-sdk
 
 TypeScript SDK for [Portals Partners NFT Marketplace API](https://portal-market.com).
 
@@ -9,14 +9,8 @@ TypeScript SDK for [Portals Partners NFT Marketplace API](https://portal-market.
 
 ## Install
 
-Add `.npmrc` to your project root:
-
-```
-@pavelpotemkin:registry=https://npm.pkg.github.com
-```
-
 ```bash
-npm install @pavelpotemkin/portals-market-api-sdk
+npm install portals-market-api-sdk
 ```
 
 ## Quick start
@@ -29,7 +23,7 @@ import {
   ListingStatus,
   NftStatus,
   PortalsApiError,
-} from "@pavelpotemkin/portals-market-api-sdk";
+} from "portals-market-api-sdk";
 
 const client = new PortalsMarketClient({ token: "your-partner-token" });
 
@@ -83,7 +77,7 @@ Built-in in-memory rate limiter based on API documentation. Returns `PortalsRate
 | **All requests (global)** | **25 req/s** |
 
 ```ts
-import { PortalsRateLimitError, isErr } from "@pavelpotemkin/portals-market-api-sdk";
+import { PortalsRateLimitError, isErr } from "portals-market-api-sdk";
 
 const res = await client.getBackdropFloors();
 if (isErr(res) && res.error instanceof PortalsRateLimitError) {

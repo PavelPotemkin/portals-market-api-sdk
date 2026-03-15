@@ -1,9 +1,6 @@
 {
-  "name": "@pavelpotemkin/portals-market-api-sdk",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
-  "version": "1.0.0",
+  "name": "portals-market-api-sdk",
+  "version": "1.0.1",
   "description": "SDK for Portals Partners NFT Marketplace API",
   "type": "module",
   "main": "./dist/index.cjs",
