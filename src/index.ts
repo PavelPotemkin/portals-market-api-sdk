@@ -9,8 +9,8 @@ export {
   PortalsNetworkError,
 } from "./errors";
 
-export { Ok, Err, isOk, isErr, unwrap } from "./result";
-export type { Result, Ok as OkType, Err as ErrType } from "./result";
+export { Ok, Err, isOk, isErr, unwrap } from "@pavelpotemkin/utils";
+export type { Result, OkType, ErrType } from "@pavelpotemkin/utils";
 
 export {
   NftStatus,

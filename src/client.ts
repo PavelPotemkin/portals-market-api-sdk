@@ -1,4 +1,5 @@
 import type { ZodType } from "zod";
+import { Ok, Err, type Result } from "@pavelpotemkin/utils";
 import {
   PortalsApiError,
   PortalsNetworkError,
@@ -7,7 +8,6 @@ import {
   PortalsError,
 } from "./errors";
 import { RateLimiter } from "./rate-limiter";
-import { Ok, Err, type Result } from "./result";
 import {
   CreateOfferRequestSchema,
   CancelOfferRequestSchema,

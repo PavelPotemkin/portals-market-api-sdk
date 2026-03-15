@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { RateLimiter } from "../src/rate-limiter";
 import { PortalsMarketClient } from "../src/client";
 import { PortalsRateLimitError } from "../src/errors";
-import { isErr, isOk } from "../src/result";
+import { isErr, isOk } from "@pavelpotemkin/utils";
 
 describe("RateLimiter", () => {
   let limiter: RateLimiter;
