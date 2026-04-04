@@ -1,13 +1,11 @@
 import {
-  HttpError,
   ApiError,
-  ResponseValidationError as PortalsValidationError,
+  HttpError,
   NetworkError as PortalsNetworkError,
+  ResponseValidationError as PortalsValidationError,
 } from "@pavelpotemkin/utils";
 
-export { HttpError as PortalsError };
-export { PortalsValidationError };
-export { PortalsNetworkError };
+export { HttpError as PortalsError, PortalsNetworkError, PortalsValidationError };
 
 export class PortalsApiError extends ApiError {
   get isValidationError() {

@@ -1,91 +1,91 @@
+import { Err, Ok, type Result } from "@pavelpotemkin/utils";
 import type { ZodType } from "zod";
-import { Ok, Err, type Result } from "@pavelpotemkin/utils";
 import {
   PortalsApiError,
+  PortalsError,
   PortalsNetworkError,
   PortalsRateLimitError,
   PortalsValidationError,
-  PortalsError,
 } from "./errors";
 import { RateLimiter } from "./rate-limiter";
 import {
-  CreateOfferRequestSchema,
-  CancelOfferRequestSchema,
   AcceptOfferRequestSchema,
-  BuyPartialRequestSchema,
-  BulkListRequestSchema,
+  AttributeFloorsResponseSchema,
+  BackdropFloorsResponseSchema,
   BulkDelistRequestSchema,
-  ListForSaleRequestSchema,
-  TransferGiftsRequestSchema,
-  WithdrawGiftsRequestSchema,
-  WithdrawTonRequestSchema,
+  BulkListingResultResponseSchema,
+  BulkListRequestSchema,
+  BuyPartialRequestSchema,
+  BuyPartialResponseSchema,
+  CancelOfferRequestSchema,
+  CheckUserExistsResponseSchema,
+  CollectionMetricsResponseSchema,
+  CollectionsPreviewResponseSchema,
+  CreateOfferRequestSchema,
   CreateOfferResponseSchema,
   FetchOfferCollectionsResponseSchema,
   FetchTopOffersResponseSchema,
-  TopCollectionOfferResponseSchema,
-  AttributeFloorsResponseSchema,
-  BackdropFloorsResponseSchema,
-  ModelBackgroundFloorsResponseSchema,
-  CollectionsPreviewResponseSchema,
-  CollectionMetricsResponseSchema,
   GenerateDepositIdResponseSchema,
+  ListForSaleRequestSchema,
   MarketActionsResponseSchema,
   MarketConfigResponseSchema,
-  BuyPartialResponseSchema,
-  BulkListingResultResponseSchema,
+  ModelBackgroundFloorsResponseSchema,
+  NftStatsResponseSchema,
   OwnedNftsResponseSchema,
   SearchNftsResponseSchema,
-  NftStatsResponseSchema,
+  TopCollectionOfferResponseSchema,
+  TransferGiftsRequestSchema,
   TransferGiftsResponseSchema,
-  WithdrawGiftsResponseSchema,
-  WithdrawalStatusesResponseSchema,
-  CheckUserExistsResponseSchema,
   UserActionsResponseSchema,
   WalletInfoResponseSchema,
-  WithdrawTonResponseSchema,
   WalletWithdrawalStatusesResponseSchema,
+  WithdrawalStatusesResponseSchema,
+  WithdrawGiftsRequestSchema,
+  WithdrawGiftsResponseSchema,
+  WithdrawTonRequestSchema,
+  WithdrawTonResponseSchema,
 } from "./schemas";
 import type {
-  CreateOfferRequest,
-  CancelOfferRequest,
   AcceptOfferRequest,
-  BuyPartialRequest,
-  BulkListRequest,
+  AttributeFloorsResponse,
+  BackdropFloorsResponse,
   BulkDelistRequest,
-  ListForSaleRequest,
-  TransferGiftsRequest,
-  WithdrawGiftsRequest,
-  WithdrawTonRequest,
+  BulkListingResultResponse,
+  BulkListRequest,
+  BuyPartialRequest,
+  BuyPartialResponse,
+  CancelOfferRequest,
+  CheckUserExistsResponse,
+  CollectionMetricsParams,
+  CollectionMetricsResponse,
+  CollectionsPreviewParams,
+  CollectionsPreviewResponse,
+  CreateOfferRequest,
   CreateOfferResponse,
   FetchOfferCollectionsResponse,
   FetchTopOffersResponse,
-  TopCollectionOfferResponse,
-  AttributeFloorsResponse,
-  BackdropFloorsResponse,
-  ModelBackgroundFloorsResponse,
-  CollectionsPreviewResponse,
-  CollectionMetricsResponse,
   GenerateDepositIdResponse,
+  ListForSaleRequest,
+  MarketActionsParams,
   MarketActionsResponse,
   MarketConfigResponse,
-  BuyPartialResponse,
-  BulkListingResultResponse,
+  ModelBackgroundFloorsResponse,
+  NftSearchParams,
+  NftStatsResponse,
   OwnedNftsResponse,
   SearchNftsResponse,
-  NftStatsResponse,
+  TopCollectionOfferResponse,
+  TransferGiftsRequest,
   TransferGiftsResponse,
-  WithdrawGiftsResponse,
-  WithdrawalStatusesResponse,
-  CheckUserExistsResponse,
+  UserActionsParams,
   UserActionsResponse,
   WalletInfoResponse,
-  WithdrawTonResponse,
   WalletWithdrawalStatusesResponse,
-  NftSearchParams,
-  MarketActionsParams,
-  UserActionsParams,
-  CollectionMetricsParams,
-  CollectionsPreviewParams,
+  WithdrawalStatusesResponse,
+  WithdrawGiftsRequest,
+  WithdrawGiftsResponse,
+  WithdrawTonRequest,
+  WithdrawTonResponse,
 } from "./types";
 
 const DEFAULT_BASE_URL = "https://portal-market.com";
@@ -143,14 +143,8 @@ export class PortalsMarketClient {
   /**
    * Отменить свой оффер на коллекцию и вернуть замороженные средства.
    */
-  async cancelCollectionOffer(
-    body: CancelOfferRequest,
-  ): Promise<Result<void, PortalsError>> {
-    return this.postNoContent(
-      "/partners/collection-offers/cancel",
-      CancelOfferRequestSchema,
-      body,
-    );
+  async cancelCollectionOffer(body: CancelOfferRequest): Promise<Result<void, PortalsError>> {
+    return this.postNoContent("/partners/collection-offers/cancel", CancelOfferRequestSchema, body);
   }
 
   /**
@@ -171,13 +165,8 @@ export class PortalsMarketClient {
   /**
    * Получить список коллекций, которые поддерживают офферы на коллекцию.
    */
-  async getOfferCollections(): Promise<
-    Result<FetchOfferCollectionsResponse, PortalsError>
-  > {
-    return this.get(
-      "/partners/collection-offers/collections",
-      FetchOfferCollectionsResponseSchema,
-    );
+  async getOfferCollections(): Promise<Result<FetchOfferCollectionsResponse, PortalsError>> {
+    return this.get("/partners/collection-offers/collections", FetchOfferCollectionsResponseSchema);
   }
 
   /**
@@ -217,9 +206,7 @@ export class PortalsMarketClient {
    * Получить минимальные цены для всех уникальных атрибутов моделей по коллекциям.
    * Rate limit: 5 req/s.
    */
-  async getAttributeFloors(): Promise<
-    Result<AttributeFloorsResponse, PortalsError>
-  > {
+  async getAttributeFloors(): Promise<Result<AttributeFloorsResponse, PortalsError>> {
     return this.get(
       "/partners/collections/attribute-floors",
       AttributeFloorsResponseSchema,
@@ -232,9 +219,7 @@ export class PortalsMarketClient {
    * Получить минимальные цены листинга, сгруппированные по типу бэкграунда.
    * Rate limit: 2 req/s.
    */
-  async getBackdropFloors(): Promise<
-    Result<BackdropFloorsResponse, PortalsError>
-  > {
+  async getBackdropFloors(): Promise<Result<BackdropFloorsResponse, PortalsError>> {
     return this.get(
       "/partners/collections/backdrops/floors",
       BackdropFloorsResponseSchema,
@@ -247,15 +232,11 @@ export class PortalsMarketClient {
    * Получить минимальные цены листинга для каждой коллекции.
    * Rate limit: 9 req/s.
    */
-  async getCollectionFloors(): Promise<
-    Result<BackdropFloorsResponse, PortalsError>
-  > {
-    return this.get(
-      "/partners/collections/floors",
-      BackdropFloorsResponseSchema,
-      undefined,
-      { key: "collections/floors", limit: 9 },
-    );
+  async getCollectionFloors(): Promise<Result<BackdropFloorsResponse, PortalsError>> {
+    return this.get("/partners/collections/floors", BackdropFloorsResponseSchema, undefined, {
+      key: "collections/floors",
+      limit: 9,
+    });
   }
 
   /**
@@ -283,11 +264,7 @@ export class PortalsMarketClient {
   async getCollectionsPreview(
     params?: CollectionsPreviewParams,
   ): Promise<Result<CollectionsPreviewResponse, PortalsError>> {
-    return this.get(
-      "/partners/collections/preview",
-      CollectionsPreviewResponseSchema,
-      params,
-    );
+    return this.get("/partners/collections/preview", CollectionsPreviewResponseSchema, params);
   }
 
   /**
@@ -312,13 +289,8 @@ export class PortalsMarketClient {
    * Сгенерировать уникальный deposit ID для TON-депозитов.
    * Используйте этот ID в memo транзакции.
    */
-  async generateDepositId(): Promise<
-    Result<GenerateDepositIdResponse, PortalsError>
-  > {
-    return this.postEmpty(
-      "/partners/deposits",
-      GenerateDepositIdResponseSchema,
-    );
+  async generateDepositId(): Promise<Result<GenerateDepositIdResponse, PortalsError>> {
+    return this.postEmpty("/partners/deposits", GenerateDepositIdResponseSchema);
   }
 
   // ── Market ──
@@ -330,19 +302,13 @@ export class PortalsMarketClient {
   async getMarketActions(
     params?: MarketActionsParams,
   ): Promise<Result<MarketActionsResponse, PortalsError>> {
-    return this.get(
-      "/partners/market/actions/",
-      MarketActionsResponseSchema,
-      params,
-    );
+    return this.get("/partners/market/actions/", MarketActionsResponseSchema, params);
   }
 
   /**
    * Получить конфигурацию маркета: комиссия, кошелёк для депозитов, курс TON/USDT.
    */
-  async getMarketConfig(): Promise<
-    Result<MarketConfigResponse, PortalsError>
-  > {
+  async getMarketConfig(): Promise<Result<MarketConfigResponse, PortalsError>> {
     return this.get("/partners/market/config", MarketConfigResponseSchema);
   }
 
@@ -352,15 +318,8 @@ export class PortalsMarketClient {
    * Купить несколько NFT с поддержкой частичной покупки.
    * Если часть NFT невалидна или недоступна — остальные всё равно будут куплены.
    */
-  async buyNfts(
-    body: BuyPartialRequest,
-  ): Promise<Result<BuyPartialResponse, PortalsError>> {
-    return this.post(
-      "/partners/nfts",
-      BuyPartialRequestSchema,
-      body,
-      BuyPartialResponseSchema,
-    );
+  async buyNfts(body: BuyPartialRequest): Promise<Result<BuyPartialResponse, PortalsError>> {
+    return this.post("/partners/nfts", BuyPartialRequestSchema, body, BuyPartialResponseSchema);
   }
 
   /**
@@ -395,30 +354,22 @@ export class PortalsMarketClient {
    * Получить NFT, принадлежащие авторизованному пользователю, с фильтрами.
    * Rate limit: 6 req/s.
    */
-  async getOwnedNfts(
-    params?: NftSearchParams,
-  ): Promise<Result<OwnedNftsResponse, PortalsError>> {
-    return this.get(
-      "/partners/nfts/owned",
-      OwnedNftsResponseSchema,
-      params,
-      { key: "nfts/owned", limit: 6 },
-    );
+  async getOwnedNfts(params?: NftSearchParams): Promise<Result<OwnedNftsResponse, PortalsError>> {
+    return this.get("/partners/nfts/owned", OwnedNftsResponseSchema, params, {
+      key: "nfts/owned",
+      limit: 6,
+    });
   }
 
   /**
    * Поиск NFT по имени, ценовому диапазону и атрибутам.
    * Rate limit: 15 req/s (можно увеличить по запросу).
    */
-  async searchNfts(
-    params?: NftSearchParams,
-  ): Promise<Result<SearchNftsResponse, PortalsError>> {
-    return this.get(
-      "/partners/nfts/search",
-      SearchNftsResponseSchema,
-      params,
-      { key: "nfts/search", limit: 15 },
-    );
+  async searchNfts(params?: NftSearchParams): Promise<Result<SearchNftsResponse, PortalsError>> {
+    return this.get("/partners/nfts/search", SearchNftsResponseSchema, params, {
+      key: "nfts/search",
+      limit: 15,
+    });
   }
 
   /**
@@ -465,20 +416,15 @@ export class PortalsMarketClient {
   async getWithdrawalStatuses(
     ids: number[],
   ): Promise<Result<WithdrawalStatusesResponse, PortalsError>> {
-    return this.get(
-      "/partners/nfts/withdrawals/statuses",
-      WithdrawalStatusesResponseSchema,
-      { ids: ids.join(",") },
-    );
+    return this.get("/partners/nfts/withdrawals/statuses", WithdrawalStatusesResponseSchema, {
+      ids: ids.join(","),
+    });
   }
 
   /**
    * Выставить одну NFT на продажу по указанной цене.
    */
-  async listNft(
-    nftId: string,
-    body: ListForSaleRequest,
-  ): Promise<Result<void, PortalsError>> {
+  async listNft(nftId: string, body: ListForSaleRequest): Promise<Result<void, PortalsError>> {
     return this.postNoContent(
       `/partners/nfts/${encodeURIComponent(nftId)}/list`,
       ListForSaleRequestSchema,
@@ -490,11 +436,7 @@ export class PortalsMarketClient {
    * Снять одну NFT с продажи.
    */
   async unlistNft(nftId: string): Promise<Result<void, PortalsError>> {
-    return this.postNoContent(
-      `/partners/nfts/${encodeURIComponent(nftId)}/unlist`,
-      null,
-      null,
-    );
+    return this.postNoContent(`/partners/nfts/${encodeURIComponent(nftId)}/unlist`, null, null);
   }
 
   // ── Users ──
@@ -502,9 +444,7 @@ export class PortalsMarketClient {
   /**
    * Проверить существование пользователя по Telegram ID.
    */
-  async checkUserExists(
-    userId: number,
-  ): Promise<Result<CheckUserExistsResponse, PortalsError>> {
+  async checkUserExists(userId: number): Promise<Result<CheckUserExistsResponse, PortalsError>> {
     return this.get(
       `/partners/users/${encodeURIComponent(String(userId))}`,
       CheckUserExistsResponseSchema,
@@ -518,11 +458,7 @@ export class PortalsMarketClient {
   async getUserActions(
     params?: UserActionsParams,
   ): Promise<Result<UserActionsResponse, PortalsError>> {
-    return this.get(
-      "/partners/users/actions",
-      UserActionsResponseSchema,
-      params,
-    );
+    return this.get("/partners/users/actions", UserActionsResponseSchema, params);
   }
 
   // ── Wallets ──
@@ -537,9 +473,7 @@ export class PortalsMarketClient {
   /**
    * Вывести TON-баланс на внешний кошелёк.
    */
-  async withdrawTon(
-    body: WithdrawTonRequest,
-  ): Promise<Result<WithdrawTonResponse, PortalsError>> {
+  async withdrawTon(body: WithdrawTonRequest): Promise<Result<WithdrawTonResponse, PortalsError>> {
     return this.post(
       "/partners/users/wallets/withdraw",
       WithdrawTonRequestSchema,
@@ -564,13 +498,9 @@ export class PortalsMarketClient {
 
   // ── Internal helpers ──
 
-  private serializeParams(
-    params: Record<string, unknown> | object,
-  ): Record<string, string> {
+  private serializeParams(params: Record<string, unknown> | object): Record<string, string> {
     const result: Record<string, string> = {};
-    for (const [key, value] of Object.entries(
-      params as Record<string, unknown>,
-    )) {
+    for (const [key, value] of Object.entries(params as Record<string, unknown>)) {
       if (value === undefined || value === null) continue;
       if (Array.isArray(value)) {
         result[key] = value.join(",");
@@ -600,10 +530,7 @@ export class PortalsMarketClient {
     if (!this.rateLimiting) return null;
 
     if (endpointLimit) {
-      const result = this.rateLimiter.check(
-        endpointLimit.key,
-        endpointLimit.limit,
-      );
+      const result = this.rateLimiter.check(endpointLimit.key, endpointLimit.limit);
       if (!result.allowed) {
         return new PortalsRateLimitError({
           endpoint: path,
@@ -613,10 +540,7 @@ export class PortalsMarketClient {
       }
     }
 
-    const globalResult = this.rateLimiter.check(
-      "__global__",
-      GLOBAL_RATE_LIMIT,
-    );
+    const globalResult = this.rateLimiter.check("__global__", GLOBAL_RATE_LIMIT);
     if (!globalResult.allowed) {
       return new PortalsRateLimitError({
         endpoint: path,
@@ -638,10 +562,7 @@ export class PortalsMarketClient {
     if (rateLimitErr) return Err(rateLimitErr);
 
     try {
-      const url = this.buildUrl(
-        path,
-        query ? this.serializeParams(query) : undefined,
-      );
+      const url = this.buildUrl(path, query ? this.serializeParams(query) : undefined);
       const res = await this.request(url, { method: "GET" });
       return this.parseResponse(res, path, responseSchema);
     } catch (err) {
@@ -697,8 +618,7 @@ export class PortalsMarketClient {
     if (rateLimitErr) return Err(rateLimitErr);
 
     try {
-      const validatedBody =
-        requestSchema && body ? requestSchema.parse(body) : undefined;
+      const validatedBody = requestSchema && body ? requestSchema.parse(body) : undefined;
       const url = this.buildUrl(path);
       const init: RequestInit = { method: "POST" };
       if (validatedBody !== undefined) {
@@ -789,10 +709,7 @@ export class PortalsMarketClient {
     return Ok(parsed.data);
   }
 
-  private async buildApiError(
-    res: Response,
-    path: string,
-  ): Promise<PortalsApiError> {
+  private async buildApiError(res: Response, path: string): Promise<PortalsApiError> {
     let body: unknown;
     try {
       body = await res.json();

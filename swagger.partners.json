@@ -575,12 +575,7 @@
               "$ref": "#/definitions/exerr.HttpError"
             }
           }
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ]
+        }
       }
     },
     "/partners/deposits": {
@@ -1147,6 +1142,15 @@
               "type": "string"
             },
             "collectionFormat": "csv",
+            "name": "statuses",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
             "name": "tg_ids",
             "in": "query"
           },
@@ -1350,6 +1354,15 @@
             ],
             "type": "string",
             "name": "status",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "name": "statuses",
             "in": "query"
           },
           {
@@ -2645,6 +2658,9 @@
         "photo_url"
       ],
       "properties": {
+        "cashback_percent": {
+          "type": "string"
+        },
         "created_at": {
           "type": "string"
         },
@@ -2660,6 +2676,9 @@
         "is_crafted": {
           "type": "boolean"
         },
+        "is_new": {
+          "type": "boolean"
+        },
         "is_premarket": {
           "type": "boolean"
         },
@@ -2672,6 +2691,9 @@
         "photo_url": {
           "type": "string"
         },
+        "points_multiplier": {
+          "type": "string"
+        },
         "short_name": {
           "type": "string"
         },
@@ -2680,6 +2702,9 @@
         },
         "unlocks_in": {
           "type": "string"
+        },
+        "zero_commission": {
+          "type": "boolean"
         }
       }
     },
@@ -3152,10 +3177,25 @@
         "referral_level"
       ],
       "properties": {
+        "first_name": {
+          "type": "string"
+        },
+        "is_banned": {
+          "type": "boolean"
+        },
         "is_influencer": {
           "type": "boolean"
         },
+        "is_premium": {
+          "type": "boolean"
+        },
+        "last_name": {
+          "type": "string"
+        },
         "name": {
+          "type": "string"
+        },
+        "photo_url": {
           "type": "string"
         },
         "referral_level": {

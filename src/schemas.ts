@@ -287,7 +287,10 @@ export const PremarketOrderSchema: z.ZodType<{
   warning_until: z.string().optional().nullable(),
   seller: UserSchema.optional().nullable(),
   buyer: UserSchema.optional().nullable(),
-  nft: z.lazy(() => NftModelSchema).optional().nullable(),
+  nft: z
+    .lazy(() => NftModelSchema)
+    .optional()
+    .nullable(),
 });
 
 export const NftModelSchema = z.object({
