@@ -1,5 +1,6 @@
 # @pavelpotemkin/portals-market-api-sdk
 
+
 TypeScript SDK for [Portals Partners NFT Marketplace API](https://portal-market.com).
 
 - Zod validation for all requests and responses
