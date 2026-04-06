@@ -6,7 +6,6 @@ export {
   PortalsApiError,
   PortalsError,
   PortalsNetworkError,
-  PortalsRateLimitError,
   PortalsValidationError,
 } from "./errors";
 

@@ -4,7 +4,6 @@ import {
   PortalsApiError,
   PortalsError,
   PortalsNetworkError,
-  PortalsRateLimitError,
   PortalsValidationError,
 } from "./errors";
 import { RateLimiter } from "./rate-limiter";
@@ -523,33 +522,12 @@ export class PortalsMarketClient {
     return url.toString();
   }
 
-  private checkRateLimit(
-    path: string,
-    endpointLimit?: EndpointRateLimit,
-  ): PortalsRateLimitError | null {
-    if (!this.rateLimiting) return null;
-
+  private async waitForRateLimit(endpointLimit?: EndpointRateLimit): Promise<void> {
+    if (!this.rateLimiting) return;
     if (endpointLimit) {
-      const result = this.rateLimiter.check(endpointLimit.key, endpointLimit.limit);
-      if (!result.allowed) {
-        return new PortalsRateLimitError({
-          endpoint: path,
-          limit: endpointLimit.limit,
-          retryAfterMs: result.retryAfterMs,
-        });
-      }
+      await this.rateLimiter.wait(endpointLimit.key, endpointLimit.limit);
     }
-
-    const globalResult = this.rateLimiter.check("__global__", GLOBAL_RATE_LIMIT);
-    if (!globalResult.allowed) {
-      return new PortalsRateLimitError({
-        endpoint: path,
-        limit: GLOBAL_RATE_LIMIT,
-        retryAfterMs: globalResult.retryAfterMs,
-      });
-    }
-
-    return null;
+    await this.rateLimiter.wait("__global__", GLOBAL_RATE_LIMIT);
   }
 
   private async get<T>(
@@ -558,8 +536,7 @@ export class PortalsMarketClient {
     query?: Record<string, unknown> | object,
     rateLimit?: EndpointRateLimit,
   ): Promise<Result<T, PortalsError>> {
-    const rateLimitErr = this.checkRateLimit(path, rateLimit);
-    if (rateLimitErr) return Err(rateLimitErr);
+    await this.waitForRateLimit(rateLimit);
 
     try {
       const url = this.buildUrl(path, query ? this.serializeParams(query) : undefined);
@@ -584,8 +561,7 @@ export class PortalsMarketClient {
     responseSchema: ZodType<TRes>,
     rateLimit?: EndpointRateLimit,
   ): Promise<Result<TRes, PortalsError>> {
-    const rateLimitErr = this.checkRateLimit(path, rateLimit);
-    if (rateLimitErr) return Err(rateLimitErr);
+    await this.waitForRateLimit(rateLimit);
 
     try {
       const validatedBody = requestSchema.parse(body);
@@ -614,8 +590,7 @@ export class PortalsMarketClient {
     body: TReq | null,
     rateLimit?: EndpointRateLimit,
   ): Promise<Result<void, PortalsError>> {
-    const rateLimitErr = this.checkRateLimit(path, rateLimit);
-    if (rateLimitErr) return Err(rateLimitErr);
+    await this.waitForRateLimit(rateLimit);
 
     try {
       const validatedBody = requestSchema && body ? requestSchema.parse(body) : undefined;
@@ -647,8 +622,7 @@ export class PortalsMarketClient {
     responseSchema: ZodType<T>,
     rateLimit?: EndpointRateLimit,
   ): Promise<Result<T, PortalsError>> {
-    const rateLimitErr = this.checkRateLimit(path, rateLimit);
-    if (rateLimitErr) return Err(rateLimitErr);
+    await this.waitForRateLimit(rateLimit);
 
     try {
       const url = this.buildUrl(path);
