@@ -95,6 +95,8 @@ export interface PortalsClientConfig {
   fetch?: typeof globalThis.fetch;
   /** Включить in-memory rate limiting (default: true) */
   rateLimiting?: boolean;
+  /** Дефолтное время ожидания при 429 в секундах, если нет Retry-After (default: 1) */
+  retryDelaySec?: number;
 }
 
 interface EndpointRateLimit {
@@ -109,6 +111,7 @@ export class PortalsMarketClient {
   private readonly baseUrl: string;
   private readonly fetch: typeof globalThis.fetch;
   private readonly rateLimiting: boolean;
+  private readonly retryDelaySec: number;
   private readonly rateLimiter: RateLimiter;
 
   constructor(config: PortalsClientConfig) {
@@ -119,6 +122,7 @@ export class PortalsMarketClient {
     this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
     this.fetch = config.fetch ?? globalThis.fetch.bind(globalThis);
     this.rateLimiting = config.rateLimiting ?? true;
+    this.retryDelaySec = config.retryDelaySec ?? 1;
     this.rateLimiter = new RateLimiter();
   }
 
@@ -640,16 +644,24 @@ export class PortalsMarketClient {
     }
   }
 
-  private async request(url: string, init: RequestInit): Promise<Response> {
+  private async request(url: string, init: RequestInit, attempt = 0): Promise<Response> {
     const endpoint = new URL(url).pathname;
     try {
-      return await this.fetch(url, {
+      const res = await this.fetch(url, {
         ...init,
         headers: {
           ...((init.headers as Record<string, string>) ?? {}),
           Authorization: `partners ${this.token}`,
         },
       });
+
+      if (res.status === 429 && attempt < 3) {
+        const retryAfter = Number(res.headers.get("retry-after")) || this.retryDelaySec;
+        await new Promise<void>((r) => setTimeout(r, retryAfter * 1000));
+        return this.request(url, init, attempt + 1);
+      }
+
+      return res;
     } catch (err) {
       throw new PortalsNetworkError({
         cause: err instanceof Error ? err : new Error(String(err)),
