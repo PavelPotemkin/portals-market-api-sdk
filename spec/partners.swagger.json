@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "Partners API for NFT marketplace integration.\n\nAuthorization header format: partners <token>\n\n**Rate Limits**\n\nA global limit of 25 req/s applies to all endpoints. Individual endpoints may have stricter limits:\n\n| Endpoint | Limit |\n|---|---|\n| GET /nfts/search | 15 req/s * |\n| GET /nfts/owned | 6 req/s |\n| GET /collections/floors | 9 req/s |\n| GET /collections/backdrops/floors | 2 req/s |\n| GET /collections/models/backgrounds/floors | 3 req/s |\n| GET /collections/attribute-floors | 5 req/s |\n| GET /collections/{id}/metrics | 8 req/s |\n| GET /collection-offers/{id}/top | 10 req/s * |\n| GET /collection-offers/{id}/all | 10 req/s * |\n\n\\* Can be increased on request. Contact support to adjust your rate limit.",
+    "description": "Partners API for NFT marketplace integration.\n\nAuthorization header format: partners <token>\n\n**Rate Limits**\n\nA global limit of 25 req/s applies to all endpoints. Individual endpoints may have stricter limits:\n\n| Endpoint | Limit |\n|---|---|\n| GET /nfts/search | 15 req/s * |\n| GET /nfts/owned | 6 req/s |\n| GET /collections/floors | 9 req/s |\n| GET /collections/backdrops/floors | 2 req/s |\n| GET /collections/models/backgrounds/floors | 3 req/s |\n| GET /collections/attribute-floors | 5 req/s |\n| GET /collections/{id}/metrics | 8 req/s |\n| GET /collection-offers/{id}/top | 10 req/s * |\n| GET /collection-offers/{id}/all | 10 req/s * |\n| POST /collection-offers/bulk/update | 2 req/s * |\n\n\\* Can be increased on request. Contact support to adjust your rate limit.",
     "title": "Portals Partners API",
     "contact": {},
     "version": "1.0.0"
@@ -16,7 +16,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Create an offer to buy NFTs from a specific collection. Funds will be frozen until offer is accepted or cancelled",
+        "description": "Create an offer to buy NFTs from a specific collection. Funds will be frozen until offer is accepted or cancelled\nRequired fields: collection_id, amount, max_nfts (1..50).\nOffers with attributes return 403 while trait offers are disabled (mode read_only or off).",
         "consumes": [
           "application/json"
         ],
@@ -42,7 +42,70 @@
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/model.CollectionOffer"
+              "$ref": "#/definitions/httpcollectionoffer.CreateOfferResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/collection-offers/bulk/update": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Update up to 50 own collection offers in one request. Items are processed sequentially and independently: a failed item does not affect the others (partial success).\nRequired per item: id, amount (>= 0.5). Optional: max_nfts — remaining NFT slots (1..50, total with already bought must not exceed 50); omitted = keep current slots, no fee. Every slot increase charges the offer fee for the added slots.\nOptional expiration_days: 0 makes the offer indefinite, 1 or 7 resets expiration from now, omitted keeps the old expiration.\nBalance is checked per item against the remaining balance. Trait offers can be updated only while trait offers are enabled; such items fail individually otherwise.\nReturns 200 with per-item results; 422 if the request itself is malformed (empty list, more than 50 items, duplicate ids, invalid amount/max_nfts/expiration_days) — nothing is applied in that case.\nRate limit: 2 req/s (can be increased on request).",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "collection-offers"
+        ],
+        "summary": "Bulk update collection offers",
+        "parameters": [
+          {
+            "description": "Offers to update",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/httptrustedapps.BulkUpdateOffersRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/collectionoffer.UpdateBatchOut"
             }
           },
           "400": {
@@ -73,7 +136,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Cancel your own collection offer and return frozen funds",
+        "description": "Cancel your own collection offer and return frozen funds\nRequired fields: id.",
         "consumes": [
           "application/json"
         ],
@@ -179,6 +242,16 @@
             "description": "Limit (default 10, max 10)",
             "name": "limit",
             "in": "query"
+          },
+          {
+            "enum": [
+              "broad",
+              "trait"
+            ],
+            "type": "string",
+            "description": "Offer scope filter",
+            "name": "scope",
+            "in": "query"
           }
         ],
         "responses": {
@@ -228,6 +301,16 @@
             "name": "collection_id",
             "in": "path",
             "required": true
+          },
+          {
+            "enum": [
+              "broad",
+              "trait"
+            ],
+            "type": "string",
+            "description": "Offer scope filter",
+            "name": "scope",
+            "in": "query"
           }
         ],
         "responses": {
@@ -259,7 +342,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Accept an offer by providing NFT IDs to sell. NFTs must belong to the offer's collection",
+        "description": "Accept an offer by providing NFT IDs to sell. NFTs must belong to the offer's collection\nRequired fields: amount (must match the offer price), nft_ids (1..50 unique ids).",
         "consumes": [
           "application/json"
         ],
@@ -575,7 +658,12 @@
               "$ref": "#/definitions/exerr.HttpError"
             }
           }
-        }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
       }
     },
     "/partners/deposits": {
@@ -641,13 +729,18 @@
                 "bundle_separated",
                 "sell",
                 "buy",
+                "lucky_buy",
                 "offer",
                 "listing",
                 "price_update",
                 "delist",
                 "transfer",
                 "cancel",
-                "reject"
+                "reject",
+                "loot_pack",
+                "loot_pack_take_gift",
+                "loot_pack_gram",
+                "loot_pack_payout"
               ],
               "type": "string"
             },
@@ -901,7 +994,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/nft.BulkListingResult"
+              "$ref": "#/definitions/dtonft.BulkListingResult"
             }
           },
           "422": {
@@ -949,7 +1042,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/nft.BulkListingResult"
+              "$ref": "#/definitions/dtonft.BulkListingResult"
             }
           },
           "422": {
@@ -1725,13 +1818,18 @@
                 "bundle_separated",
                 "sell",
                 "buy",
+                "lucky_buy",
                 "offer",
                 "listing",
                 "price_update",
                 "delist",
                 "transfer",
                 "cancel",
-                "reject"
+                "reject",
+                "loot_pack",
+                "loot_pack_take_gift",
+                "loot_pack_gram",
+                "loot_pack_payout"
               ],
               "type": "string"
             },
@@ -2157,6 +2255,34 @@
         }
       }
     },
+    "collectionoffer.UpdateBatchFailedItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "collectionoffer.UpdateBatchOut": {
+      "type": "object",
+      "properties": {
+        "failed": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/collectionoffer.UpdateBatchFailedItem"
+          }
+        },
+        "updated": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "dtocollectionfiltersrepo.AttributeFloorInfo": {
       "type": "object",
       "required": [
@@ -2202,7 +2328,6 @@
       "type": "object",
       "properties": {
         "floor_price": {
-          "description": "TODO: implement",
           "type": "string"
         },
         "is_premarket": {
@@ -2249,6 +2374,9 @@
         "max_nfts": {
           "type": "integer"
         },
+        "scope": {
+          "$ref": "#/definitions/model.CollectionOfferScope"
+        },
         "sender_id": {
           "type": "integer"
         },
@@ -2274,6 +2402,34 @@
         }
       }
     },
+    "dtonft.BulkListingResult": {
+      "type": "object",
+      "properties": {
+        "failed_nfts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dtonft.FailedNft"
+          }
+        },
+        "successful_nfts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "dtonft.FailedNft": {
+      "type": "object",
+      "properties": {
+        "nft_id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
     "dwithdrawalsrepo.FetchStatusByIdOut": {
       "type": "object",
       "required": [
@@ -2292,7 +2448,64 @@
     "exerr.HttpError": {
       "type": "object",
       "properties": {
+        "code": {
+          "type": "string"
+        },
         "message": {
+          "type": "string"
+        }
+      }
+    },
+    "httpcollectionoffer.CreateOfferAttribute": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "model",
+            "backdrop",
+            "symbol"
+          ]
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "httpcollectionoffer.CreateOfferResponse": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "collection_id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "current_nfts": {
+          "type": "integer"
+        },
+        "expires_at": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "max_nfts": {
+          "type": "integer"
+        },
+        "scope": {
+          "$ref": "#/definitions/model.CollectionOfferScope"
+        },
+        "sender_id": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string"
+        },
+        "updated_at": {
           "type": "string"
         }
       }
@@ -2331,6 +2544,18 @@
         "external_collection_number": {
           "type": "integer"
         },
+        "fiat_eligible": {
+          "type": "boolean"
+        },
+        "fiat_price_rub": {
+          "type": "string"
+        },
+        "fiat_purchase_in_progress": {
+          "type": "boolean"
+        },
+        "fiat_purchase_lock_expires_at": {
+          "type": "string"
+        },
         "floor_price": {
           "type": "string"
         },
@@ -2354,6 +2579,9 @@
         },
         "listed_at": {
           "type": "string"
+        },
+        "lucky_buy_eligible": {
+          "type": "boolean"
         },
         "name": {
           "type": "string"
@@ -2383,29 +2611,55 @@
     },
     "httptrustedapps.AcceptOfferRequest": {
       "type": "object",
-      "required": [
-        "amount",
-        "nft_ids"
-      ],
       "properties": {
         "amount": {
           "type": "string"
         },
         "nft_ids": {
           "type": "array",
-          "maxItems": 50,
-          "minItems": 1,
           "items": {
             "type": "string"
           }
         }
       }
     },
+    "httptrustedapps.BulkUpdateOfferItem": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "expiration_days": {
+          "type": "integer",
+          "enum": [
+            0,
+            1,
+            7
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "max_nfts": {
+          "type": "integer",
+          "maximum": 50,
+          "minimum": 1
+        }
+      }
+    },
+    "httptrustedapps.BulkUpdateOffersRequest": {
+      "type": "object",
+      "properties": {
+        "offers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/httptrustedapps.BulkUpdateOfferItem"
+          }
+        }
+      }
+    },
     "httptrustedapps.CancelOfferRequest": {
       "type": "object",
-      "required": [
-        "id"
-      ],
       "properties": {
         "id": {
           "type": "string"
@@ -2414,14 +2668,15 @@
     },
     "httptrustedapps.CreateOfferRequest": {
       "type": "object",
-      "required": [
-        "amount",
-        "collection_id",
-        "max_nfts"
-      ],
       "properties": {
         "amount": {
           "type": "string"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/httpcollectionoffer.CreateOfferAttribute"
+          }
         },
         "collection_id": {
           "type": "string"
@@ -2521,6 +2776,9 @@
           "$ref": "#/definitions/model.UserActionNft"
         },
         "offer_id": {
+          "type": "string"
+        },
+        "old_price": {
           "type": "string"
         },
         "type": {
@@ -2755,66 +3013,28 @@
         }
       }
     },
-    "model.CollectionOffer": {
+    "model.CollectionOfferScope": {
       "type": "object",
-      "required": [
-        "amount",
-        "collection_id",
-        "created_at",
-        "current_nfts",
-        "id",
-        "max_nfts",
-        "sender_id",
-        "status",
-        "updated_at"
-      ],
       "properties": {
-        "amount": {
-          "type": "string"
+        "backdrops": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
-        "collection_id": {
-          "type": "string"
+        "models": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
-        "created_at": {
-          "type": "string"
-        },
-        "current_nfts": {
-          "type": "integer"
-        },
-        "expires_at": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "max_nfts": {
-          "type": "integer"
-        },
-        "sender_id": {
-          "type": "integer"
-        },
-        "status": {
-          "$ref": "#/definitions/model.CollectionOfferStatus"
-        },
-        "updated_at": {
-          "type": "string"
+        "symbols": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
-    },
-    "model.CollectionOfferStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "completed",
-        "rejected",
-        "canceled"
-      ],
-      "x-enum-varnames": [
-        "CollectionOfferPendingStatus",
-        "CollectionOfferCompletedStatus",
-        "CollectionOfferRejectedStatus",
-        "CollectionOfferCanceledStatus"
-      ]
     },
     "model.CollectionWithPreview": {
       "type": "object",
@@ -2822,6 +3042,9 @@
         "name"
       ],
       "properties": {
+        "cashback_percent": {
+          "type": "string"
+        },
         "day_volume": {
           "type": "string"
         },
@@ -2831,10 +3054,19 @@
         "id": {
           "type": "string"
         },
+        "is_new": {
+          "type": "boolean"
+        },
+        "is_premarket": {
+          "type": "boolean"
+        },
         "name": {
           "type": "string"
         },
         "photo_url": {
+          "type": "string"
+        },
+        "points_multiplier": {
           "type": "string"
         },
         "preview": {
@@ -2845,6 +3077,9 @@
         },
         "supply": {
           "type": "string"
+        },
+        "zero_commission": {
+          "type": "boolean"
         }
       }
     },
@@ -2892,7 +3127,16 @@
         "offer_id": {
           "type": "string"
         },
+        "old_price": {
+          "type": "string"
+        },
         "referrer_revenue": {
+          "type": "string"
+        },
+        "related_entity_id": {
+          "type": "string"
+        },
+        "related_entity_type": {
           "type": "string"
         },
         "target_user_id": {
@@ -2936,6 +3180,18 @@
         "external_collection_number": {
           "type": "integer"
         },
+        "fiat_eligible": {
+          "type": "boolean"
+        },
+        "fiat_price_rub": {
+          "type": "string"
+        },
+        "fiat_purchase_in_progress": {
+          "type": "boolean"
+        },
+        "fiat_purchase_lock_expires_at": {
+          "type": "string"
+        },
         "floor_price": {
           "type": "string"
         },
@@ -2956,6 +3212,9 @@
         },
         "listed_at": {
           "type": "string"
+        },
+        "lucky_buy_eligible": {
+          "type": "boolean"
         },
         "name": {
           "type": "string"
@@ -3342,7 +3601,12 @@
         "bundle_purchase",
         "bundle_offer",
         "bundle_transfer",
-        "bundle_price_update"
+        "bundle_price_update",
+        "lucky_buy_win",
+        "lucky_buy_loss",
+        "loot_pack_gram",
+        "loot_pack_payout",
+        "loot_pack_take_gift"
       ],
       "x-enum-varnames": [
         "UserActionTypePurchase",
@@ -3364,7 +3628,12 @@
         "UserActionBundlePurchaseType",
         "UserActionBundleOfferType",
         "UserActionBundleTransferType",
-        "UserActionBundlePriceUpdateType"
+        "UserActionBundlePriceUpdateType",
+        "UserActionLuckyBuyWinType",
+        "UserActionLuckyBuyLossType",
+        "UserActionLootPackGramType",
+        "UserActionLootPackPayoutType",
+        "UserActionLootPackTakeGiftType"
       ]
     },
     "nft.AttributeFloorsMap": {
@@ -3416,31 +3685,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/nft.NftPriceDetail"
-          }
-        }
-      }
-    },
-    "nft.BulkListingResult": {
-      "type": "object",
-      "properties": {
-        "failed_nfts": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "nft_id": {
-                "type": "string"
-              },
-              "reason": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "successful_nfts": {
-          "type": "array",
-          "items": {
-            "type": "string"
           }
         }
       }
@@ -3548,7 +3792,8 @@
         "SELF_PURCHASE",
         "DUPLICATE_NFT",
         "BUNDLED_NFT",
-        "NFT_NOT_IMPORTED"
+        "NFT_NOT_IMPORTED",
+        "NFT_NOT_AVAILABLE"
       ],
       "x-enum-comments": {
         "InvalidNftBundled": "NFT is in bundle",
@@ -3568,7 +3813,8 @@
         "InvalidNftSelfPurchase",
         "InvalidNftDuplicate",
         "InvalidNftBundled",
-        "InvalidNftNotImported"
+        "InvalidNftNotImported",
+        "InvalidNftNotAvailable"
       ]
     },
     "nft.ListForSaleIn": {
@@ -3632,8 +3878,7 @@
     "nft.TransferGiftsIn": {
       "type": "object",
       "required": [
-        "nft_ids",
-        "recipient"
+        "nft_ids"
       ],
       "properties": {
         "anonymous": {
@@ -3650,6 +3895,10 @@
         "recipient": {
           "type": "string",
           "example": "username (use only if you do not have it) or telegram_id"
+        },
+        "recipient_token": {
+          "type": "string",
+          "example": "opaque token from /nfts/transfer-gifts/recipients"
         }
       }
     },

@@ -1,16 +1,40 @@
-const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+/**
+ * Пауза на `ms`, прерываемая сигналом. При отмене reject с `signal.reason`.
+ */
+export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(signal.reason);
+      return;
+    }
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(signal?.reason);
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}
 
+/**
+ * Скользящее окно 1 с на ключ. Состояние живёт в памяти одного экземпляра:
+ * несколько клиентов или процессов на один токен лимит не делят.
+ */
 export class RateLimiter {
   private buckets = new Map<string, number[]>();
 
-  async wait(key: string, limit: number): Promise<void> {
+  /** Ждёт свободный слот для `key` при лимите `limit` запросов в секунду. */
+  async wait(key: string, limit: number, signal?: AbortSignal): Promise<void> {
     for (;;) {
+      if (signal?.aborted) throw signal.reason;
       const now = Date.now();
-      const timestamps = this.buckets.get(key);
-
+      let timestamps = this.buckets.get(key);
       if (!timestamps) {
-        this.buckets.set(key, [now]);
-        return;
+        timestamps = [];
+        this.buckets.set(key, timestamps);
       }
 
       const cutoff = now - 1000;
@@ -27,7 +51,7 @@ export class RateLimiter {
       }
 
       const retryAfterMs = 1000 - (now - timestamps[0]);
-      await sleep(Math.max(1, retryAfterMs));
+      await sleep(Math.max(1, retryAfterMs), signal);
     }
   }
 

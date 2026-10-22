@@ -1,235 +1,127 @@
-import type { z } from "zod";
-import type {
-  AcceptOfferRequestSchema,
-  AnonymizedUserActionSchema,
-  AttributeFloorInfoSchema,
-  AttributeFloorPricesSchema,
-  AttributeFloorsMapSchema,
-  AttributeFloorsResponseSchema,
-  BackdropFloorsResponseSchema,
-  BulkDelistRequestSchema,
-  BulkListingFailedNftSchema,
-  BulkListingResultResponseSchema,
-  BulkListRequestSchema,
-  BundleExtendedSchema,
-  BundleNftDetailsSchema,
-  BundleNftSchema,
-  BuyDetailSchema,
-  BuyPartialRequestSchema,
-  BuyPartialResponseSchema,
-  CancelOfferRequestSchema,
-  CheckUserExistsResponseSchema,
-  CollectionAssetSchema,
-  CollectionMetricsResponseSchema,
-  CollectionMetricsSchema,
-  CollectionOfferInfoSchema,
-  CollectionOfferItemSchema,
-  CollectionOfferSchema,
-  CollectionSchema,
-  CollectionSortBy,
-  CollectionsPreviewResponseSchema,
-  CollectionWithPreviewSchema,
-  CraftedStatus,
-  CreateOfferRequestSchema,
-  CreateOfferResponseSchema,
-  DetailedUserActionSchema,
-  FetchOfferCollectionsResponseSchema,
-  FetchTopOffersResponseSchema,
-  GenerateDepositIdResponseSchema,
-  HttpNftSchema,
-  InvalidNftDetailSchema,
-  ListForSaleRequestSchema,
-  ListingStatus,
-  MarketActionsResponseSchema,
-  MarketActionType,
-  MarketConfigResponseSchema,
-  MintStatus,
-  ModelBackgroundFloorsResponseSchema,
-  NftAttributeSchema,
-  NftModelSchema,
-  NftPriceDetailSchema,
-  NftStatsResponseSchema,
-  OwnedNftsResponseSchema,
-  Period,
-  PremarketFilterStatus,
-  PremarketOrderSchema,
-  PurchaseResultSchema,
-  SearchNftsResponseSchema,
-  SortByActions,
-  SortByNfts,
-  SortOrder,
-  TonWithdrawalStatusItemSchema,
-  TopCollectionOfferResponseSchema,
-  TransferFailedItemSchema,
-  TransferGiftsRequestSchema,
-  TransferGiftsResponseSchema,
-  TransferRecipientInfoSchema,
-  UpdatedNftDetailSchema,
-  UserActionCollectionOfferSchema,
-  UserActionNftSchema,
-  UserActionOfferSchema,
-  UserActionsResponseSchema,
-  UserSchema,
-  WalletInfoResponseSchema,
-  WalletWithdrawalStatusesResponseSchema,
-  WithdrawalStatusesResponseSchema,
-  WithdrawalStatusSchema,
-  WithdrawGiftsRequestSchema,
-  WithdrawGiftsResponseSchema,
-  WithdrawTonRequestSchema,
-  WithdrawTonResponseSchema,
-} from "./schemas";
+/**
+ * Публичные имена типов. Сами типы генерируются из спеки в `generated.ts`
+ * (там имена повторяют определения спеки); здесь — понятные имена для потребителей.
+ */
+import type * as G from "./generated";
 
-// ── Models ──
+// ── Модели ──
 
-export type NftAttribute = z.infer<typeof NftAttributeSchema>;
-export type User = z.infer<typeof UserSchema>;
-export type BundleNftDetails = z.infer<typeof BundleNftDetailsSchema>;
-export type BundleNft = z.infer<typeof BundleNftSchema>;
-export type BundleExtended = z.infer<typeof BundleExtendedSchema>;
-export type PremarketOrder = z.infer<typeof PremarketOrderSchema>;
-export type NftModel = z.infer<typeof NftModelSchema>;
-export type HttpNft = z.infer<typeof HttpNftSchema>;
-export type AttributeFloorPrices = z.infer<typeof AttributeFloorPricesSchema>;
-export type AttributeFloorsMap = z.infer<typeof AttributeFloorsMapSchema>;
-export type Collection = z.infer<typeof CollectionSchema>;
-export type CollectionAsset = z.infer<typeof CollectionAssetSchema>;
-export type CollectionWithPreview = z.infer<typeof CollectionWithPreviewSchema>;
-export type CollectionMetrics = z.infer<typeof CollectionMetricsSchema>;
-export type CollectionOffer = z.infer<typeof CollectionOfferSchema>;
-export type CollectionOfferInfo = z.infer<typeof CollectionOfferInfoSchema>;
-export type CollectionOfferItem = z.infer<typeof CollectionOfferItemSchema>;
-export type UserActionNft = z.infer<typeof UserActionNftSchema>;
-export type UserActionOffer = z.infer<typeof UserActionOfferSchema>;
-export type UserActionCollectionOffer = z.infer<typeof UserActionCollectionOfferSchema>;
-export type AnonymizedUserAction = z.infer<typeof AnonymizedUserActionSchema>;
-export type DetailedUserAction = z.infer<typeof DetailedUserActionSchema>;
-export type BuyDetail = z.infer<typeof BuyDetailSchema>;
-export type NftPriceDetail = z.infer<typeof NftPriceDetailSchema>;
-export type PurchaseResult = z.infer<typeof PurchaseResultSchema>;
-export type InvalidNftDetail = z.infer<typeof InvalidNftDetailSchema>;
-export type UpdatedNftDetail = z.infer<typeof UpdatedNftDetailSchema>;
-export type BulkListingFailedNft = z.infer<typeof BulkListingFailedNftSchema>;
-export type TransferFailedItem = z.infer<typeof TransferFailedItemSchema>;
-export type TransferRecipientInfo = z.infer<typeof TransferRecipientInfoSchema>;
-export type WithdrawalStatus = z.infer<typeof WithdrawalStatusSchema>;
-export type TonWithdrawalStatusItem = z.infer<typeof TonWithdrawalStatusItemSchema>;
-export type AttributeFloorInfo = z.infer<typeof AttributeFloorInfoSchema>;
+/** NFT в выдаче `searchNfts` и `getOwnedNfts` (`httpmodel.Nft`, есть `is_owned`). */
+export type Nft = G.HttpmodelNft;
+/** NFT внутри других объектов: покупка, премаркет (`model.Nft`, без `is_owned`). */
+export type NftModel = G.ModelNft;
+export type NftAttribute = G.NftAttribute;
+export type User = G.User;
+export type BundleNftDetails = G.BundleNftDetails;
+export type BundleNft = G.BundleNft;
+export type BundleExtended = G.BundleExtended;
+export type PremarketOrder = G.PremarketOrder;
+/** Цены по имени атрибута: имя → цена строкой. */
+export type AttributeFloorPrices = G.AttributeFloorPrices;
+export type AttributeFloorsMap = G.AttributeFloorsMap;
+export type AttributeFloorInfo = G.AttributeFloorInfo;
+/** Флоры атрибутов по коллекциям: коллекция → { models, backdrops, symbols }. */
+export type CollectionAttrFloorPrices = G.FetchCollectionAttrFloorPricesOut;
+export type Collection = G.Collection;
+export type CollectionAsset = G.CollectionAsset;
+export type CollectionWithPreview = G.CollectionWithPreview;
+export type CollectionMetrics = G.CollectionMetrics;
+/** Коллекция в оффере на коллекцию (`dtocollectionoffers.CollectionInfo`). */
+export type CollectionOfferInfo = G.CollectionInfo;
+/** Оффер на коллекцию в выдаче `/top` и `/all`. */
+export type CollectionOfferItem = G.CollectionOfferItem;
+/** Лучший оффер коллекции (`getTopCollectionOffer`). */
+export type TopOffer = G.CollectionOfferItem;
+/** Атрибуты trait-оффера; пустой или отсутствующий scope — оффер на всю коллекцию. */
+export type CollectionOfferScope = G.CollectionOfferScope;
+export type CreateOfferAttribute = G.CreateOfferAttribute;
+export type BulkUpdateOfferItem = G.BulkUpdateOfferItem;
+export type BulkUpdateFailedItem = G.UpdateBatchFailedItem;
+export type UserActionNft = G.UserActionNft;
+export type UserActionOffer = G.UserActionOffer;
+export type UserActionCollectionOffer = G.UserActionCollectionOffer;
+export type AnonymizedUserAction = G.AnonymizedUserAction;
+export type DetailedUserAction = G.DetailedUserAction;
+export type BuyDetail = G.BuyDetail;
+export type NftPriceDetail = G.NftPriceDetail;
+export type PurchaseResult = G.PurchaseResult;
+export type InvalidNftDetail = G.InvalidNftDetail;
+export type UpdatedNftDetail = G.UpdatedNftDetail;
+export type BulkListingFailedNft = G.FailedNft;
+export type TransferFailedItem = G.TransferFailedItem;
+export type TransferRecipientInfo = G.TransferRecipientInfo;
+/** Статус вывода гифта. */
+export type WithdrawalStatus = G.WithdrawalStatus;
+/** Статус вывода TON. */
+export type TonWithdrawalStatusItem = G.FetchStatusByIdOut;
+/** Тело ошибки бэкенда (`exerr.HttpError`). */
+export type ApiErrorBody = G.HttpError;
 
-// ── Requests ──
+// ── Запросы ──
 
-export type CreateOfferRequest = z.infer<typeof CreateOfferRequestSchema>;
-export type CancelOfferRequest = z.infer<typeof CancelOfferRequestSchema>;
-export type AcceptOfferRequest = z.infer<typeof AcceptOfferRequestSchema>;
-export type BuyPartialRequest = z.infer<typeof BuyPartialRequestSchema>;
-export type BulkListRequest = z.infer<typeof BulkListRequestSchema>;
-export type BulkDelistRequest = z.infer<typeof BulkDelistRequestSchema>;
-export type ListForSaleRequest = z.infer<typeof ListForSaleRequestSchema>;
-export type TransferGiftsRequest = z.infer<typeof TransferGiftsRequestSchema>;
-export type WithdrawGiftsRequest = z.infer<typeof WithdrawGiftsRequestSchema>;
-export type WithdrawTonRequest = z.infer<typeof WithdrawTonRequestSchema>;
+export type CreateOfferRequest = G.CreateOfferRequest;
+export type CancelOfferRequest = G.CancelOfferRequest;
+export type AcceptOfferRequest = G.AcceptOfferRequest;
+export type BulkUpdateOffersRequest = G.BulkUpdateOffersRequest;
+export type BuyPartialRequest = G.BuyPartialIn;
+export type BulkListRequest = G.BulkListForSaleIn;
+export type BulkDelistRequest = G.BulkDelistIn;
+export type ListForSaleRequest = G.ListForSaleIn;
+/** Передача гифтов: получатель задаётся ровно одним из `recipient` или `recipient_token`. */
+export type TransferGiftsRequest = Omit<G.TransferGiftsIn, "recipient" | "recipient_token"> &
+  (
+    | {
+        /** Username или Telegram ID получателя. */
+        recipient: string;
+        recipient_token?: never;
+      }
+    | {
+        /** Токен получателя из пользовательского `/nfts/transfer-gifts/recipients`. */
+        recipient_token: string;
+        recipient?: never;
+      }
+  );
+export type WithdrawGiftsRequest = G.WithdrawGiftsIn;
+export type WithdrawTonRequest = G.WithdrawIn;
 
-// ── Responses ──
+// ── Ответы ──
 
-export type CreateOfferResponse = z.infer<typeof CreateOfferResponseSchema>;
-export type FetchOfferCollectionsResponse = z.infer<typeof FetchOfferCollectionsResponseSchema>;
-export type FetchTopOffersResponse = z.infer<typeof FetchTopOffersResponseSchema>;
-export type TopCollectionOfferResponse = z.infer<typeof TopCollectionOfferResponseSchema>;
-export type AttributeFloorsResponse = z.infer<typeof AttributeFloorsResponseSchema>;
-export type BackdropFloorsResponse = z.infer<typeof BackdropFloorsResponseSchema>;
-export type ModelBackgroundFloorsResponse = z.infer<typeof ModelBackgroundFloorsResponseSchema>;
-export type CollectionsPreviewResponse = z.infer<typeof CollectionsPreviewResponseSchema>;
-export type CollectionMetricsResponse = z.infer<typeof CollectionMetricsResponseSchema>;
-export type GenerateDepositIdResponse = z.infer<typeof GenerateDepositIdResponseSchema>;
-export type MarketActionsResponse = z.infer<typeof MarketActionsResponseSchema>;
-export type MarketConfigResponse = z.infer<typeof MarketConfigResponseSchema>;
-export type BuyPartialResponse = z.infer<typeof BuyPartialResponseSchema>;
-export type BulkListingResultResponse = z.infer<typeof BulkListingResultResponseSchema>;
-export type OwnedNftsResponse = z.infer<typeof OwnedNftsResponseSchema>;
-export type SearchNftsResponse = z.infer<typeof SearchNftsResponseSchema>;
-export type NftStatsResponse = z.infer<typeof NftStatsResponseSchema>;
-export type TransferGiftsResponse = z.infer<typeof TransferGiftsResponseSchema>;
-export type WithdrawGiftsResponse = z.infer<typeof WithdrawGiftsResponseSchema>;
-export type WithdrawalStatusesResponse = z.infer<typeof WithdrawalStatusesResponseSchema>;
-export type CheckUserExistsResponse = z.infer<typeof CheckUserExistsResponseSchema>;
-export type UserActionsResponse = z.infer<typeof UserActionsResponseSchema>;
-export type WalletInfoResponse = z.infer<typeof WalletInfoResponseSchema>;
-export type WithdrawTonResponse = z.infer<typeof WithdrawTonResponseSchema>;
-export type WalletWithdrawalStatusesResponse = z.infer<
-  typeof WalletWithdrawalStatusesResponseSchema
->;
+export type CreateOfferResponse = G.CreateOfferResponse;
+export type BulkUpdateOffersResponse = G.UpdateBatchOut;
+export type FetchOfferCollectionsResponse = G.FetchCollectionsOut;
+export type FetchTopOffersResponse = G.FetchTopOut;
+export type AttributeFloorsResponse = G.FetchAllUniqueAttributeFloorsOut;
+/** `getBackdropFloors`: фон → минимальная цена. */
+export type BackdropFloorsResponse = G.FetchBackgroundFloorPricesOut;
+/** `getCollectionFloors`: коллекция → минимальная цена (та же форма, что у бэкдропов). */
+export type CollectionFloorsResponse = G.FetchBackgroundFloorPricesOut;
+export type ModelBackgroundFloorsResponse = G.FetchModelsBackgroundsFloorPricesOut;
+export type CollectionsPreviewResponse = G.FetchAllCollectionsWithPreviewOut;
+export type CollectionMetricsResponse = G.FetchCollectionMetricsOut;
+export type GenerateDepositIdResponse = G.GenerateDepositIdOut;
+export type MarketActionsResponse = G.FetchAllUserActionsOut;
+export type MarketConfigResponse = G.GeneralOut;
+export type BuyPartialResponse = G.BuyPartialOut;
+export type BulkListingResultResponse = G.BulkListingResult;
+export type OwnedNftsResponse = G.FetchOwnedOut;
+export type SearchNftsResponse = G.SearchNftsOut;
+export type NftStatsResponse = G.FetchUserStatsOut;
+export type TransferGiftsResponse = G.TransferGiftsOut;
+export type WithdrawGiftsResponse = G.WithdrawGiftsOut;
+export type WithdrawalStatusesResponse = G.WithdrawalStatusesOut;
+export type CheckUserExistsResponse = G.CheckExistenceOut;
+export type UserActionsResponse = G.FetchUserActionsOut;
+export type WalletInfoResponse = G.InfoOut;
+export type WithdrawTonResponse = G.WithdrawOut;
+export type WalletWithdrawalStatusesResponse = G.WithdrawStatusOut;
 
-// ── Query Params ──
+// ── Query-параметры ──
 
-export interface NftSearchParams {
-  collection_id?: string;
-  collection_ids?: string[];
-  ids?: string[];
-  tg_ids?: string[];
-  search?: string;
-  status?: ListingStatus;
-  sort_by?: SortByNfts;
-  min_price?: string;
-  max_price?: string;
-  limit?: number;
-  offset?: number;
-  filter_by_models?: string[];
-  filter_by_backdrops?: string[];
-  filter_by_symbols?: string[];
-  external_collection_number?: number;
-  exclude_bundled?: boolean;
-  is_owned?: boolean;
-  is_crafted_status?: CraftedStatus;
-  mint_status?: MintStatus;
-  premarket_status?: PremarketFilterStatus;
-  name_filter?: string;
-  with_attributes?: boolean;
-  with_attribute_floors?: boolean;
-}
-
-export interface MarketActionsParams {
-  action_types?: MarketActionType[];
-  collection_id?: string;
-  collection_ids?: string[];
-  filter_by_models?: string[];
-  filter_by_backdrops?: string[];
-  filter_by_symbols?: string[];
-  search?: string;
-  status?: ListingStatus;
-  sort_by?: SortByActions;
-  min_price?: string;
-  max_price?: string;
-  limit?: number;
-  offset?: number;
-  period?: Period;
-  external_collection_number?: number;
-}
-
-export interface UserActionsParams {
-  action_types?: MarketActionType[];
-  collection_id?: string;
-  collection_ids?: string[];
-  filter_by_models?: string[];
-  filter_by_backdrops?: string[];
-  filter_by_symbols?: string[];
-  search?: string;
-  status?: ListingStatus;
-  sort_by?: SortByActions;
-  min_price?: string;
-  max_price?: string;
-  limit?: number;
-  offset?: number;
-  period?: Period;
-  external_collection_number?: number;
-}
-
-export interface CollectionMetricsParams {
-  group_by: string;
-  from?: string;
-  to?: string;
-}
-
-export interface CollectionsPreviewParams {
-  sort_by?: CollectionSortBy;
-  sort_order?: SortOrder;
-}
+export type NftSearchParams = G.GetNftsSearchQuery;
+export type OwnedNftsParams = G.GetNftsOwnedQuery;
+export type MarketActionsParams = G.GetMarketActionsQuery;
+export type UserActionsParams = G.GetUsersActionsQuery;
+export type CollectionMetricsParams = G.GetCollectionsMetricsQuery;
+export type CollectionsPreviewParams = G.GetCollectionsPreviewQuery;
+export type AllCollectionOffersParams = G.GetCollectionOffersAllQuery;
+export type TopCollectionOfferParams = G.GetCollectionOffersTopQuery;

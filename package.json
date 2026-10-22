@@ -1,11 +1,20 @@
 {
   "name": "@pavelpotemkin/portals-market-api-sdk",
+  "version": "2.0.0",
+  "description": "Typed client for the Portals Market Partner API (generated zod schemas, Result-based errors, retries, rate limiting)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PavelPotemkin/portals-market-api-sdk.git"
+  },
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.2.0",
-  "description": "SDK for Portals Partners NFT Marketplace API",
   "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -22,32 +31,34 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "generate": "tsx scripts/generate.ts",
+    "generate:check": "tsx scripts/generate.ts --check",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "lint": "biome check src",
-    "lint:fix": "biome check --fix src",
-    "format": "biome format --write src",
-    "prepublishOnly": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "lint": "biome check src tests scripts spec",
+    "lint:fix": "biome check --fix src tests scripts spec",
+    "format": "biome format --write src tests scripts spec",
+    "prepublishOnly": "npm run generate:check && npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
-    "@pavelpotemkin/utils": "^1.0.0",
-    "zod": "^3.24.0"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.10",
-    "tsup": "^8.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^4.1.0"
+    "@biomejs/biome": "^2.6.2",
+    "@types/node": "^20.19.43",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.12"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/PavelPotemkin/portals-market-api-sdk.git"
-  },
-  "license": "MIT"
+  "overrides": {
+    "esbuild": "^0.28.2"
+  }
 }
