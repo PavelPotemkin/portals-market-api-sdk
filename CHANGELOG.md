@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.1.0
+
+The spec is updated to the current Partner API: Arena methods, subscription plans and one rate limit per key.
+
+- Arena: `getArenaState` (`GET /partners/arena/state`), `placeArenaBet` (`POST /partners/arena/bet`),
+  `getArenaInventory` (`GET /partners/arena/inventory`); enums `ArenaBetType`, `ArenaGameStatus`, `ArenaRoomMode`.
+  `placeArenaBet` is irreversible: never retried; `BET_OUTCOME_UNKNOWN` (504) means the bet may have been placed.
+- Rate limits come from the backend's `X-RateLimit-Limit` and work with both backend models. The per-key limit is
+  new config `maxRps` (positive integer, `max_rps` of your plan or a bit below), otherwise the header, otherwise 25
+  (`DEFAULT_MAX_RPS`) until the first response. Per-endpoint limits are no longer in the spec: endpoints that the
+  backend still limits separately take their own limit from their header (the first request goes out before it is
+  known).
+- Typing change in the generated table: `schemas.GLOBAL_RATE_LIMIT` is `number | null` (`null` for the current spec)
+  and `schemas.operations[*].rateLimit` is `undefined` for every operation. Code that read these values as numbers
+  needs an update.
+- New fields: `deposit_bonus` (`NftDepositBonus`, `DepositBonusClaimStatus`) and `lucky_craft_eligible` on NFTs; action
+  types `lucky_craft`, `lucky_craft_win`, `lucky_craft_loss`, `lucky_craft_stake`.
+- Arena methods work once the market backend with Partner API Arena support is deployed.
+
 ## 2.0.0
 
 A rewrite on top of schemas generated from the current Partner API spec. Breaking: there are no 1.x

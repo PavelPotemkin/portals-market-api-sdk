@@ -16,10 +16,38 @@ function exactlyOneOf(fields: string[]) {
 /** Версия спеки: `info.version`. */
 export const SPEC_VERSION = "1.0.0";
 
-/** Глобальный лимит из описания спеки, req/s на токен. */
-export const GLOBAL_RATE_LIMIT = 25;
+/** Глобальный лимит из описания спеки, req/s на токен; `null` — лимит задаёт тариф ключа. */
+export const GLOBAL_RATE_LIMIT: number | null = null;
 
 // ── Enums ──
+
+/** `httptrustedapps.arenaBet.betType` */
+export const ArenaBetType = {
+  Ton: "ton",
+  Gift: "gift",
+} as const;
+export type ArenaBetType = (typeof ArenaBetType)[keyof typeof ArenaBetType];
+export const ArenaBetTypeSchema = z.enum(ArenaBetType);
+
+/** `httptrustedapps.arenaGame.status` */
+export const ArenaGameStatus = {
+  Idle: "idle",
+  Countdown: "countdown",
+  Preparing: "preparing",
+  Active: "active",
+  Settling: "settling",
+  Completed: "completed",
+} as const;
+export type ArenaGameStatus = (typeof ArenaGameStatus)[keyof typeof ArenaGameStatus];
+export const ArenaGameStatusSchema = z.enum(ArenaGameStatus);
+
+/** `httptrustedapps.arenaRoom.mode` */
+export const ArenaRoomMode = {
+  Classic: "classic",
+  Team: "team",
+} as const;
+export type ArenaRoomMode = (typeof ArenaRoomMode)[keyof typeof ArenaRoomMode];
+export const ArenaRoomModeSchema = z.enum(ArenaRoomMode);
 
 /** `model.BundleStatus` */
 export const BundleStatus = {
@@ -54,6 +82,16 @@ export const CraftedStatus = {
 } as const;
 export type CraftedStatus = (typeof CraftedStatus)[keyof typeof CraftedStatus];
 export const CraftedStatusSchema = z.enum(CraftedStatus);
+
+/** `model.DepositBonusClaimStatus` */
+export const DepositBonusClaimStatus = {
+  Pending: "pending",
+  Claimable: "claimable",
+  Paid: "paid",
+  Forfeited: "forfeited",
+} as const;
+export type DepositBonusClaimStatus = (typeof DepositBonusClaimStatus)[keyof typeof DepositBonusClaimStatus];
+export const DepositBonusClaimStatusSchema = z.enum(DepositBonusClaimStatus);
 
 /** `nft.InvalidNftReason` */
 export const InvalidNftReason = {
@@ -98,6 +136,9 @@ export const MarketActionType = {
   LootPackTakeGift: "loot_pack_take_gift",
   LootPackGram: "loot_pack_gram",
   LootPackPayout: "loot_pack_payout",
+  LuckyCraft: "lucky_craft",
+  LuckyCraftWin: "lucky_craft_win",
+  LuckyCraftLoss: "lucky_craft_loss",
 } as const;
 export type MarketActionType = (typeof MarketActionType)[keyof typeof MarketActionType];
 export const MarketActionTypeSchema = z.enum(MarketActionType);
@@ -254,6 +295,9 @@ export const UserActionType = {
   LootPackGram: "loot_pack_gram",
   LootPackPayout: "loot_pack_payout",
   LootPackTakeGift: "loot_pack_take_gift",
+  LuckyCraftWin: "lucky_craft_win",
+  LuckyCraftLoss: "lucky_craft_loss",
+  LuckyCraftStake: "lucky_craft_stake",
 } as const;
 export type UserActionType = (typeof UserActionType)[keyof typeof UserActionType];
 export const UserActionTypeSchema = z.enum(UserActionType);
@@ -316,6 +360,201 @@ export const AnonymizedUserActionSchema: z.ZodType<AnonymizedUserAction> = z.loo
   offer_id: z.string().nullish(),
   old_price: z.string().nullish(),
   type: openEnum<UserActionType>(),
+});
+
+/** `httptrustedapps.arenaBet` (ответ) */
+export interface ArenaBet {
+  amount: string;
+  betType: ArenaBetType | (string & {});
+  createdAt: number;
+  mine: boolean;
+  playerId: string;
+  playerName: string;
+  [key: string]: unknown;
+}
+
+/** `httptrustedapps.arenaBet` (ответ) */
+export const ArenaBetSchema: z.ZodType<ArenaBet> = z.looseObject({
+  amount: z.string(),
+  betType: openEnum<ArenaBetType>(),
+  createdAt: z.number(),
+  mine: z.boolean(),
+  playerId: z.string(),
+  playerName: z.string(),
+});
+
+/** `httptrustedapps.arenaBetRequest` (запрос) */
+export interface ArenaBetRequest {
+  /** required for ton */
+  amount?: string | null;
+  bet_type: ArenaBetType;
+  /** required for gift, 1-50 ids */
+  gift_ids?: string[] | null;
+  room_id: number;
+  /** team rooms only */
+  team_id?: string | null;
+}
+
+/** `httptrustedapps.arenaBetRequest` (запрос) */
+export const ArenaBetRequestSchema: z.ZodType<ArenaBetRequest> = z.object({
+  /** required for ton */
+  amount: z.string().nullish(),
+  bet_type: ArenaBetTypeSchema,
+  /** required for gift, 1-50 ids */
+  gift_ids: z.array(z.string()).min(1).max(50).nullish(),
+  room_id: z.number().int(),
+  /** team rooms only */
+  team_id: z.string().nullish(),
+}).refine(exactlyOneOf(["amount","gift_ids"]), {
+  message: "Exactly one of amount, gift_ids must be set",
+  path: ["amount"],
+});
+
+/** `httptrustedapps.arenaBetResponse` (ответ) */
+export interface ArenaBetResponse {
+  acceptedAmount: string | null;
+  betId: string;
+  gameId: number;
+  room: ArenaRoom | null;
+  serverTime: number;
+  [key: string]: unknown;
+}
+
+/** `httptrustedapps.arenaBetResponse` (ответ) */
+export const ArenaBetResponseSchema: z.ZodType<ArenaBetResponse> = z.looseObject({
+  acceptedAmount: z.string().nullable(),
+  betId: z.string(),
+  gameId: z.number(),
+  room: z.lazy(() => ArenaRoomSchema).nullable(),
+  serverTime: z.number(),
+});
+
+/** `httptrustedapps.arenaGame` (ответ) */
+export interface ArenaGame {
+  bets: ArenaBet[];
+  countdownEndsAt?: number | null;
+  id: number;
+  playerCount: number;
+  prizePool: string;
+  status: ArenaGameStatus | (string & {});
+  [key: string]: unknown;
+}
+
+/** `httptrustedapps.arenaGame` (ответ) */
+export const ArenaGameSchema: z.ZodType<ArenaGame> = z.looseObject({
+  bets: z.array(z.lazy(() => ArenaBetSchema)),
+  countdownEndsAt: z.number().nullish(),
+  id: z.number(),
+  playerCount: z.number(),
+  prizePool: z.string(),
+  status: openEnum<ArenaGameStatus>(),
+});
+
+/** `httptrustedapps.arenaInventoryAttr` (ответ) */
+export interface ArenaInventoryAttr {
+  floor?: string | null;
+  rarityPerMille: number;
+  type: string;
+  value: string;
+  [key: string]: unknown;
+}
+
+/** `httptrustedapps.arenaInventoryAttr` (ответ) */
+export const ArenaInventoryAttrSchema: z.ZodType<ArenaInventoryAttr> = z.looseObject({
+  floor: z.string().nullish(),
+  rarityPerMille: z.number(),
+  type: z.string(),
+  value: z.string(),
+});
+
+/** `httptrustedapps.arenaInventoryItem` (ответ) */
+export interface ArenaInventoryItem {
+  animationUrl?: string | null;
+  attributes: ArenaInventoryAttr[];
+  collection: string;
+  collectionId: string;
+  externalCollectionNumber: number;
+  floorPrice?: string | null;
+  hasAnimation: boolean;
+  id: string;
+  importSource: string;
+  isCrafted: boolean;
+  name: string;
+  photoUrl: string;
+  price: string;
+  status: string;
+  tgId?: string | null;
+  [key: string]: unknown;
+}
+
+/** `httptrustedapps.arenaInventoryItem` (ответ) */
+export const ArenaInventoryItemSchema: z.ZodType<ArenaInventoryItem> = z.looseObject({
+  animationUrl: z.string().nullish(),
+  attributes: z.array(z.lazy(() => ArenaInventoryAttrSchema)),
+  collection: z.string(),
+  collectionId: z.string(),
+  externalCollectionNumber: z.number(),
+  floorPrice: z.string().nullish(),
+  hasAnimation: z.boolean(),
+  id: z.string(),
+  importSource: z.string(),
+  isCrafted: z.boolean(),
+  name: z.string(),
+  photoUrl: z.string(),
+  price: z.string(),
+  status: z.string(),
+  tgId: z.string().nullish(),
+});
+
+/** `httptrustedapps.arenaInventoryResponse` (ответ) */
+export interface ArenaInventoryResponse {
+  items: ArenaInventoryItem[];
+  totalCount: number;
+  [key: string]: unknown;
+}
+
+/** `httptrustedapps.arenaInventoryResponse` (ответ) */
+export const ArenaInventoryResponseSchema: z.ZodType<ArenaInventoryResponse> = z.looseObject({
+  items: z.array(z.lazy(() => ArenaInventoryItemSchema)),
+  totalCount: z.number(),
+});
+
+/** `httptrustedapps.arenaRoom` (ответ) */
+export interface ArenaRoom {
+  allowGiftBets: boolean;
+  countdownDurationSeconds: number;
+  game: ArenaGame | null;
+  maxBetAmount: string;
+  maxPlayersCount: number;
+  minBetAmount: string;
+  mode: ArenaRoomMode | (string & {});
+  roomId: number;
+  [key: string]: unknown;
+}
+
+/** `httptrustedapps.arenaRoom` (ответ) */
+export const ArenaRoomSchema: z.ZodType<ArenaRoom> = z.looseObject({
+  allowGiftBets: z.boolean(),
+  countdownDurationSeconds: z.number(),
+  game: z.lazy(() => ArenaGameSchema).nullable(),
+  maxBetAmount: z.string(),
+  maxPlayersCount: z.number(),
+  minBetAmount: z.string(),
+  mode: openEnum<ArenaRoomMode>(),
+  roomId: z.number(),
+});
+
+/** `httptrustedapps.arenaStateResponse` (ответ) */
+export interface ArenaStateResponse {
+  rooms: ArenaRoom[];
+  serverTime: number;
+  [key: string]: unknown;
+}
+
+/** `httptrustedapps.arenaStateResponse` (ответ) */
+export const ArenaStateResponseSchema: z.ZodType<ArenaStateResponse> = z.looseObject({
+  rooms: z.array(z.lazy(() => ArenaRoomSchema)),
+  serverTime: z.number(),
 });
 
 /** `dtocollectionfiltersrepo.AttributeFloorInfo` (ответ) */
@@ -1072,6 +1311,7 @@ export interface HttpmodelNft {
   attributes: NftAttribute[];
   bundle_id?: number | null;
   collection_id: string;
+  deposit_bonus?: NftDepositBonus | null;
   emoji_id?: string | null;
   external_collection_number: number;
   fiat_eligible?: boolean | null;
@@ -1087,6 +1327,7 @@ export interface HttpmodelNft {
   is_owned: boolean;
   listed_at?: string | null;
   lucky_buy_eligible?: boolean | null;
+  lucky_craft_eligible?: boolean | null;
   name: string;
   photo_url: string;
   premarket_data?: PremarketOrder | null;
@@ -1104,6 +1345,7 @@ export const HttpmodelNftSchema: z.ZodType<HttpmodelNft> = z.looseObject({
   attributes: z.array(z.lazy(() => NftAttributeSchema)),
   bundle_id: z.number().nullish(),
   collection_id: z.string(),
+  deposit_bonus: z.lazy(() => NftDepositBonusSchema).nullish(),
   emoji_id: z.string().nullish(),
   external_collection_number: z.number(),
   fiat_eligible: z.boolean().nullish(),
@@ -1119,6 +1361,7 @@ export const HttpmodelNftSchema: z.ZodType<HttpmodelNft> = z.looseObject({
   is_owned: z.boolean(),
   listed_at: z.string().nullish(),
   lucky_buy_eligible: z.boolean().nullish(),
+  lucky_craft_eligible: z.boolean().nullish(),
   name: z.string(),
   photo_url: z.string(),
   premarket_data: z.lazy(() => PremarketOrderSchema).nullish(),
@@ -1175,6 +1418,7 @@ export interface ModelNft {
   attributes: NftAttribute[];
   bundle_id?: number | null;
   collection_id: string;
+  deposit_bonus?: NftDepositBonus | null;
   emoji_id?: string | null;
   external_collection_number: number;
   fiat_eligible?: boolean | null;
@@ -1189,6 +1433,7 @@ export interface ModelNft {
   is_crafted?: boolean | null;
   listed_at?: string | null;
   lucky_buy_eligible?: boolean | null;
+  lucky_craft_eligible?: boolean | null;
   name: string;
   photo_url: string;
   premarket_data?: PremarketOrder | null;
@@ -1206,6 +1451,7 @@ export const ModelNftSchema: z.ZodType<ModelNft> = z.looseObject({
   attributes: z.array(z.lazy(() => NftAttributeSchema)),
   bundle_id: z.number().nullish(),
   collection_id: z.string(),
+  deposit_bonus: z.lazy(() => NftDepositBonusSchema).nullish(),
   emoji_id: z.string().nullish(),
   external_collection_number: z.number(),
   fiat_eligible: z.boolean().nullish(),
@@ -1220,6 +1466,7 @@ export const ModelNftSchema: z.ZodType<ModelNft> = z.looseObject({
   is_crafted: z.boolean().nullish(),
   listed_at: z.string().nullish(),
   lucky_buy_eligible: z.boolean().nullish(),
+  lucky_craft_eligible: z.boolean().nullish(),
   name: z.string(),
   photo_url: z.string(),
   premarket_data: z.lazy(() => PremarketOrderSchema).nullish(),
@@ -1245,6 +1492,21 @@ export const NftAttributeSchema: z.ZodType<NftAttribute> = z.looseObject({
   rarity_per_mille: z.number(),
   type: openEnum<NftAttributeType>(),
   value: z.string(),
+});
+
+/** `model.NftDepositBonus` (ответ) */
+export interface NftDepositBonus {
+  amount?: string | null;
+  eligible_at?: string | null;
+  status?: DepositBonusClaimStatus | (string & {}) | null;
+  [key: string]: unknown;
+}
+
+/** `model.NftDepositBonus` (ответ) */
+export const NftDepositBonusSchema: z.ZodType<NftDepositBonus> = z.looseObject({
+  amount: z.string().nullish(),
+  eligible_at: z.string().nullish(),
+  status: openEnum<DepositBonusClaimStatus>().nullish(),
 });
 
 /** `nft.NftPriceDetail` (запрос) */
@@ -1638,6 +1900,42 @@ export const WithdrawStatusOutSchema: z.ZodType<WithdrawStatusOut> = z.looseObje
 
 // ── Operations ──
 
+/** Query-параметры `GET /partners/arena/inventory` */
+export interface GetArenaInventoryQuery {
+  /** 1-150, default 150 */
+  limit?: number | null;
+  /** Offset */
+  offset?: number | null;
+  /** Search by name */
+  search?: string | null;
+  /** Filter by status */
+  status?: string | null;
+  /** Filter by multiple statuses, comma separated */
+  statuses?: string | null;
+  /** Collection short names, comma separated */
+  collection?: string | null;
+  /** price asc | price desc | listed_at desc */
+  sort_by?: string | null;
+}
+
+/** Query-параметры `GET /partners/arena/inventory` */
+export const GetArenaInventoryQuerySchema: z.ZodType<GetArenaInventoryQuery> = z.object({
+  /** 1-150, default 150 */
+  limit: z.number().int().nullish(),
+  /** Offset */
+  offset: z.number().int().nullish(),
+  /** Search by name */
+  search: z.string().nullish(),
+  /** Filter by status */
+  status: z.string().nullish(),
+  /** Filter by multiple statuses, comma separated */
+  statuses: z.string().nullish(),
+  /** Collection short names, comma separated */
+  collection: z.string().nullish(),
+  /** price asc | price desc | listed_at desc */
+  sort_by: z.string().nullish(),
+});
+
 /** Query-параметры `GET /partners/collection-offers/{collection_id}/all` */
 export interface GetCollectionOffersAllQuery {
   /** Limit (default 10, max 10) */
@@ -1918,6 +2216,39 @@ export const GetUsersWalletsWithdrawalsStatusesQuerySchema: z.ZodType<GetUsersWa
 
 /** Все операции спеки: метод, путь, схемы запроса и ответа, лимит из описания. */
 export const operations = {
+  /** Place an Arena bet in TON or gifts */
+  postArenaBet: {
+    method: "POST",
+    path: "/partners/arena/bet",
+    pathParams: [],
+    query: undefined,
+    body: ArenaBetRequestSchema,
+    response: ArenaBetResponseSchema,
+    successStatus: 200,
+    rateLimit: undefined,
+  },
+  /** Own gifts with Arena valuation */
+  getArenaInventory: {
+    method: "GET",
+    path: "/partners/arena/inventory",
+    pathParams: [],
+    query: GetArenaInventoryQuerySchema,
+    body: undefined,
+    response: ArenaInventoryResponseSchema,
+    successStatus: 200,
+    rateLimit: undefined,
+  },
+  /** Arena state: all rooms with the current game and its bets */
+  getArenaState: {
+    method: "GET",
+    path: "/partners/arena/state",
+    pathParams: [],
+    query: undefined,
+    body: undefined,
+    response: ArenaStateResponseSchema,
+    successStatus: 200,
+    rateLimit: undefined,
+  },
   /** Create a new collection offer */
   postCollectionOffers: {
     method: "POST",
@@ -1938,7 +2269,7 @@ export const operations = {
     body: BulkUpdateOffersRequestSchema,
     response: UpdateBatchOutSchema,
     successStatus: 200,
-    rateLimit: 2,
+    rateLimit: undefined,
   },
   /** Cancel a collection offer */
   postCollectionOffersCancel: {
@@ -1971,7 +2302,7 @@ export const operations = {
     body: undefined,
     response: FetchTopOutSchema,
     successStatus: 200,
-    rateLimit: 10,
+    rateLimit: undefined,
   },
   /** Get top collection offer */
   getCollectionOffersTop: {
@@ -1982,7 +2313,7 @@ export const operations = {
     body: undefined,
     response: CollectionOfferItemSchema.nullable(),
     successStatus: 200,
-    rateLimit: 10,
+    rateLimit: undefined,
   },
   /** Accept a collection offer */
   postCollectionOffersAccept: {
@@ -2004,7 +2335,7 @@ export const operations = {
     body: undefined,
     response: FetchAllUniqueAttributeFloorsOutSchema,
     successStatus: 200,
-    rateLimit: 5,
+    rateLimit: undefined,
   },
   /** Get floor prices for common backgrounds */
   getCollectionsBackdropsFloors: {
@@ -2015,7 +2346,7 @@ export const operations = {
     body: undefined,
     response: FetchBackgroundFloorPricesOutSchema,
     successStatus: 200,
-    rateLimit: 2,
+    rateLimit: undefined,
   },
   /** Get floor prices for all collections */
   getCollectionsFloors: {
@@ -2026,7 +2357,7 @@ export const operations = {
     body: undefined,
     response: FetchBackgroundFloorPricesOutSchema,
     successStatus: 200,
-    rateLimit: 9,
+    rateLimit: undefined,
   },
   /** Get background floor prices for specific models */
   getCollectionsModelsBackgroundsFloors: {
@@ -2037,7 +2368,7 @@ export const operations = {
     body: undefined,
     response: FetchModelsBackgroundsFloorPricesOutSchema,
     successStatus: 200,
-    rateLimit: 3,
+    rateLimit: undefined,
   },
   /** Get all collections with preview */
   getCollectionsPreview: {
@@ -2059,7 +2390,7 @@ export const operations = {
     body: undefined,
     response: FetchCollectionMetricsOutSchema,
     successStatus: 200,
-    rateLimit: 8,
+    rateLimit: undefined,
   },
   /** Generate deposit ID for user */
   postDeposits: {
@@ -2136,7 +2467,7 @@ export const operations = {
     body: undefined,
     response: FetchOwnedOutSchema,
     successStatus: 200,
-    rateLimit: 6,
+    rateLimit: undefined,
   },
   /** Search NFTs by name with filters */
   getNftsSearch: {
@@ -2147,7 +2478,7 @@ export const operations = {
     body: undefined,
     response: SearchNftsOutSchema,
     successStatus: 200,
-    rateLimit: 15,
+    rateLimit: undefined,
   },
   /** Get user NFT statistics */
   getNftsStats: {
@@ -2301,6 +2632,15 @@ export const definitionSchemas: Record<string, z.ZodType> = {
   "httptrustedapps.BulkUpdateOffersRequest": BulkUpdateOffersRequestSchema,
   "httptrustedapps.CancelOfferRequest": CancelOfferRequestSchema,
   "httptrustedapps.CreateOfferRequest": CreateOfferRequestSchema,
+  "httptrustedapps.arenaBet": ArenaBetSchema,
+  "httptrustedapps.arenaBetRequest": ArenaBetRequestSchema,
+  "httptrustedapps.arenaBetResponse": ArenaBetResponseSchema,
+  "httptrustedapps.arenaGame": ArenaGameSchema,
+  "httptrustedapps.arenaInventoryAttr": ArenaInventoryAttrSchema,
+  "httptrustedapps.arenaInventoryItem": ArenaInventoryItemSchema,
+  "httptrustedapps.arenaInventoryResponse": ArenaInventoryResponseSchema,
+  "httptrustedapps.arenaRoom": ArenaRoomSchema,
+  "httptrustedapps.arenaStateResponse": ArenaStateResponseSchema,
   "httptrustedapps.fetchOwnedOut": FetchOwnedOutSchema,
   "httptrustedapps.generalOut": GeneralOutSchema,
   "httptrustedapps.searchNftsOut": SearchNftsOutSchema,
@@ -2315,10 +2655,12 @@ export const definitionSchemas: Record<string, z.ZodType> = {
   "model.CollectionMetrics": CollectionMetricsSchema,
   "model.CollectionOfferScope": CollectionOfferScopeSchema,
   "model.CollectionWithPreview": CollectionWithPreviewSchema,
+  "model.DepositBonusClaimStatus": DepositBonusClaimStatusSchema,
   "model.DetailedUserAction": DetailedUserActionSchema,
   "model.Nft": ModelNftSchema,
   "model.NftAttribute": NftAttributeSchema,
   "model.NftAttributeType": NftAttributeTypeSchema,
+  "model.NftDepositBonus": NftDepositBonusSchema,
   "model.NftImportSource": NftImportSourceSchema,
   "model.NftStatus": NftStatusSchema,
   "model.PremarketOrder": PremarketOrderSchema,

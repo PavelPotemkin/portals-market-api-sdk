@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "Partners API for NFT marketplace integration.\n\nAuthorization header format: partners <token>\n\n**Rate Limits**\n\nA global limit of 25 req/s applies to all endpoints. Individual endpoints may have stricter limits:\n\n| Endpoint | Limit |\n|---|---|\n| GET /nfts/search | 15 req/s * |\n| GET /nfts/owned | 6 req/s |\n| GET /collections/floors | 9 req/s |\n| GET /collections/backdrops/floors | 2 req/s |\n| GET /collections/models/backgrounds/floors | 3 req/s |\n| GET /collections/attribute-floors | 5 req/s |\n| GET /collections/{id}/metrics | 8 req/s |\n| GET /collection-offers/{id}/top | 10 req/s * |\n| GET /collection-offers/{id}/all | 10 req/s * |\n| POST /collection-offers/bulk/update | 2 req/s * |\n\n\\* Can be increased on request. Contact support to adjust your rate limit.",
+    "description": "Partners API for NFT marketplace integration.\n\nAuthorization header format: partners <key>\n\n**Access**\n\nA key works only with an active Partner API subscription, purchased in the Portals mini app. Plans with read access allow only GET requests; other methods return 403 PARTNER_READ_ONLY.\n\n**Rate Limits**\n\nOne limit applies per key across all endpoints: max_rps of your subscription plan, in requests per second. Exceeding it returns 429 RATE_LIMITED. Every response includes X-RateLimit-Limit, X-RateLimit-Remaining and X-RateLimit-Reset headers.",
     "title": "Portals Partners API",
     "contact": {},
     "version": "1.0.0"
@@ -9,6 +9,184 @@
   "host": "portal-market.com",
   "basePath": "/",
   "paths": {
+    "/partners/arena/bet": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "arena"
+        ],
+        "summary": "Place an Arena bet in TON or gifts",
+        "parameters": [
+          {
+            "description": "Bet",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/httptrustedapps.arenaBetRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bet placed. acceptedAmount and room are null if they could not be read back",
+            "schema": {
+              "$ref": "#/definitions/httptrustedapps.arenaBetResponse"
+            }
+          },
+          "403": {
+            "description": "PARTNER_READ_ONLY or user banned",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "404": {
+            "description": "Gift not found",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "409": {
+            "description": "Gift unavailable",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "422": {
+            "description": "Validation or Arena error, code as in the mini app",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "504": {
+            "description": "BET_OUTCOME_UNKNOWN: the bet may have been placed, check state before retrying",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/arena/inventory": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "arena"
+        ],
+        "summary": "Own gifts with Arena valuation",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "1-150, default 150",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "Offset",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Search by name",
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter by status",
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter by multiple statuses, comma separated",
+            "name": "statuses",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Collection short names, comma separated",
+            "name": "collection",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "price asc | price desc | listed_at desc",
+            "name": "sort_by",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/httptrustedapps.arenaInventoryResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
+    "/partners/arena/state": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "arena"
+        ],
+        "summary": "Arena state: all rooms with the current game and its bets",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/httptrustedapps.arenaStateResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          }
+        }
+      }
+    },
     "/partners/collection-offers/": {
       "post": {
         "security": [
@@ -79,7 +257,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Update up to 50 own collection offers in one request. Items are processed sequentially and independently: a failed item does not affect the others (partial success).\nRequired per item: id, amount (>= 0.5). Optional: max_nfts — remaining NFT slots (1..50, total with already bought must not exceed 50); omitted = keep current slots, no fee. Every slot increase charges the offer fee for the added slots.\nOptional expiration_days: 0 makes the offer indefinite, 1 or 7 resets expiration from now, omitted keeps the old expiration.\nBalance is checked per item against the remaining balance. Trait offers can be updated only while trait offers are enabled; such items fail individually otherwise.\nReturns 200 with per-item results; 422 if the request itself is malformed (empty list, more than 50 items, duplicate ids, invalid amount/max_nfts/expiration_days) — nothing is applied in that case.\nRate limit: 2 req/s (can be increased on request).",
+        "description": "Update up to 50 own collection offers in one request. Items are processed sequentially and independently: a failed item does not affect the others (partial success).\nRequired per item: id, amount (>= 0.5). Optional: max_nfts — remaining NFT slots (1..50, total with already bought must not exceed 50); omitted = keep current slots, no fee. Every slot increase charges the offer fee for the added slots.\nOptional expiration_days: 0 makes the offer indefinite, 1 or 7 resets expiration from now, omitted keeps the old expiration.\nBalance is checked per item against the remaining balance. Trait offers can be updated only while trait offers are enabled; such items fail individually otherwise.\nReturns 200 with per-item results; 422 if the request itself is malformed (empty list, more than 50 items, duplicate ids, invalid amount/max_nfts/expiration_days) — nothing is applied in that case.",
         "consumes": [
           "application/json"
         ],
@@ -221,7 +399,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Returns top active offers for a collection, sorted by amount descending. Rate limit: 10 req/s (can be increased on request).",
+        "description": "Returns top active offers for a collection, sorted by amount descending.",
         "produces": [
           "application/json"
         ],
@@ -286,7 +464,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Returns the highest active offer for a specific collection. Rate limit: 10 req/s (can be increased on request).",
+        "description": "Returns the highest active offer for a specific collection.",
         "produces": [
           "application/json"
         ],
@@ -403,7 +581,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Returns floor prices for all unique model attributes across collections. Rate limit: 5 req/s.",
+        "description": "Returns floor prices for all unique model attributes across collections.",
         "produces": [
           "application/json"
         ],
@@ -434,7 +612,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Returns minimum listing prices grouped by backdrop type. Rate limit: 2 req/s.",
+        "description": "Returns minimum listing prices grouped by backdrop type.",
         "produces": [
           "application/json"
         ],
@@ -471,7 +649,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Returns minimum listing prices for each collection. Rate limit: 9 req/s.",
+        "description": "Returns minimum listing prices for each collection.",
         "produces": [
           "application/json"
         ],
@@ -508,7 +686,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Returns minimum listing prices for backdrops of specified models. Rate limit: 3 req/s.",
+        "description": "Returns minimum listing prices for backdrops of specified models.",
         "produces": [
           "application/json"
         ],
@@ -600,7 +778,7 @@
     },
     "/partners/collections/{collection_id}/metrics": {
       "get": {
-        "description": "Returns historical data for a collection including volume and average prices. Rate limit: 8 req/s.",
+        "description": "Returns historical data for a collection including volume and average prices.",
         "produces": [
           "application/json"
         ],
@@ -710,7 +888,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Returns recent market actions (buys, sells, listings, etc.) with optional filters",
+        "description": "Returns recent market actions (buys, sells, listings, etc.) with optional filters. sort_by=price asc is not supported and returns 422.",
         "produces": [
           "application/json"
         ],
@@ -740,7 +918,10 @@
                 "loot_pack",
                 "loot_pack_take_gift",
                 "loot_pack_gram",
-                "loot_pack_payout"
+                "loot_pack_payout",
+                "lucky_craft",
+                "lucky_craft_win",
+                "lucky_craft_loss"
               ],
               "type": "string"
             },
@@ -879,6 +1060,12 @@
           },
           "500": {
             "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/exerr.HttpError"
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
             "schema": {
               "$ref": "#/definitions/exerr.HttpError"
             }
@@ -1067,7 +1254,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Returns NFTs owned by the authenticated user with optional filters. Rate limit: 6 req/s.",
+        "description": "Returns NFTs owned by the authenticated user with optional filters.",
         "produces": [
           "application/json"
         ],
@@ -1287,7 +1474,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Search NFTs with various filters - by name, price range, and attributes. Rate limit: 15 req/s (can be increased on request).",
+        "description": "Search NFTs with various filters - by name, price range, and attributes.",
         "produces": [
           "application/json"
         ],
@@ -1829,7 +2016,10 @@
                 "loot_pack",
                 "loot_pack_take_gift",
                 "loot_pack_gram",
-                "loot_pack_payout"
+                "loot_pack_payout",
+                "lucky_craft",
+                "lucky_craft_win",
+                "lucky_craft_loss"
               ],
               "type": "string"
             },
@@ -2538,6 +2728,9 @@
         "collection_id": {
           "type": "string"
         },
+        "deposit_bonus": {
+          "$ref": "#/definitions/model.NftDepositBonus"
+        },
         "emoji_id": {
           "type": "string"
         },
@@ -2581,6 +2774,9 @@
           "type": "string"
         },
         "lucky_buy_eligible": {
+          "type": "boolean"
+        },
+        "lucky_craft_eligible": {
           "type": "boolean"
         },
         "name": {
@@ -2688,6 +2884,285 @@
           "type": "integer",
           "maximum": 50,
           "minimum": 1
+        }
+      }
+    },
+    "httptrustedapps.arenaBet": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string",
+          "example": "1.5"
+        },
+        "betType": {
+          "type": "string",
+          "enum": [
+            "ton",
+            "gift"
+          ],
+          "example": "ton"
+        },
+        "createdAt": {
+          "type": "integer",
+          "example": 1761480001000
+        },
+        "mine": {
+          "type": "boolean"
+        },
+        "playerId": {
+          "type": "string"
+        },
+        "playerName": {
+          "type": "string"
+        }
+      }
+    },
+    "httptrustedapps.arenaBetRequest": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "description": "required for ton",
+          "type": "string",
+          "example": "1.5"
+        },
+        "bet_type": {
+          "type": "string",
+          "enum": [
+            "ton",
+            "gift"
+          ],
+          "example": "ton"
+        },
+        "gift_ids": {
+          "description": "required for gift, 1-50 ids",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "room_id": {
+          "type": "integer",
+          "example": 1
+        },
+        "team_id": {
+          "description": "team rooms only",
+          "type": "string",
+          "example": "1"
+        }
+      }
+    },
+    "httptrustedapps.arenaBetResponse": {
+      "type": "object",
+      "properties": {
+        "acceptedAmount": {
+          "type": "string",
+          "x-nullable": true,
+          "example": "1.5"
+        },
+        "betId": {
+          "type": "string"
+        },
+        "gameId": {
+          "type": "integer",
+          "example": 12345
+        },
+        "room": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/httptrustedapps.arenaRoom"
+            }
+          ],
+          "x-nullable": true
+        },
+        "serverTime": {
+          "type": "integer",
+          "example": 1761480000000
+        }
+      }
+    },
+    "httptrustedapps.arenaGame": {
+      "type": "object",
+      "properties": {
+        "bets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/httptrustedapps.arenaBet"
+          }
+        },
+        "countdownEndsAt": {
+          "type": "integer",
+          "example": 1761480030000
+        },
+        "id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "playerCount": {
+          "type": "integer",
+          "example": 3
+        },
+        "prizePool": {
+          "type": "string",
+          "example": "12.5"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "idle",
+            "countdown",
+            "preparing",
+            "active",
+            "settling",
+            "completed"
+          ],
+          "example": "countdown"
+        }
+      }
+    },
+    "httptrustedapps.arenaInventoryAttr": {
+      "type": "object",
+      "properties": {
+        "floor": {
+          "type": "string"
+        },
+        "rarityPerMille": {
+          "type": "number"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "httptrustedapps.arenaInventoryItem": {
+      "type": "object",
+      "properties": {
+        "animationUrl": {
+          "type": "string"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/httptrustedapps.arenaInventoryAttr"
+          }
+        },
+        "collection": {
+          "type": "string"
+        },
+        "collectionId": {
+          "type": "string"
+        },
+        "externalCollectionNumber": {
+          "type": "integer"
+        },
+        "floorPrice": {
+          "type": "string"
+        },
+        "hasAnimation": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": "string"
+        },
+        "importSource": {
+          "type": "string"
+        },
+        "isCrafted": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string",
+          "example": "Plush Pepe"
+        },
+        "photoUrl": {
+          "type": "string"
+        },
+        "price": {
+          "type": "string",
+          "example": "3.2"
+        },
+        "status": {
+          "type": "string"
+        },
+        "tgId": {
+          "type": "string"
+        }
+      }
+    },
+    "httptrustedapps.arenaInventoryResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/httptrustedapps.arenaInventoryItem"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "example": 42
+        }
+      }
+    },
+    "httptrustedapps.arenaRoom": {
+      "type": "object",
+      "properties": {
+        "allowGiftBets": {
+          "type": "boolean",
+          "example": true
+        },
+        "countdownDurationSeconds": {
+          "type": "integer",
+          "example": 30
+        },
+        "game": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/httptrustedapps.arenaGame"
+            }
+          ],
+          "x-nullable": true
+        },
+        "maxBetAmount": {
+          "type": "string",
+          "example": "1000"
+        },
+        "maxPlayersCount": {
+          "type": "integer",
+          "example": 50
+        },
+        "minBetAmount": {
+          "type": "string",
+          "example": "0.1"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "classic",
+            "team"
+          ],
+          "example": "classic"
+        },
+        "roomId": {
+          "type": "integer",
+          "example": 1
+        }
+      }
+    },
+    "httptrustedapps.arenaStateResponse": {
+      "type": "object",
+      "properties": {
+        "rooms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/httptrustedapps.arenaRoom"
+          }
+        },
+        "serverTime": {
+          "type": "integer",
+          "example": 1761480000000
         }
       }
     },
@@ -3083,6 +3558,21 @@
         }
       }
     },
+    "model.DepositBonusClaimStatus": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "claimable",
+        "paid",
+        "forfeited"
+      ],
+      "x-enum-varnames": [
+        "DepositBonusClaimPending",
+        "DepositBonusClaimClaimable",
+        "DepositBonusClaimPaid",
+        "DepositBonusClaimForfeited"
+      ]
+    },
     "model.DetailedUserAction": {
       "type": "object",
       "required": [
@@ -3174,6 +3664,9 @@
         "collection_id": {
           "type": "string"
         },
+        "deposit_bonus": {
+          "$ref": "#/definitions/model.NftDepositBonus"
+        },
         "emoji_id": {
           "type": "string"
         },
@@ -3214,6 +3707,9 @@
           "type": "string"
         },
         "lucky_buy_eligible": {
+          "type": "boolean"
+        },
+        "lucky_craft_eligible": {
           "type": "boolean"
         },
         "name": {
@@ -3285,6 +3781,20 @@
         "NftAttributeTypeBackdrop",
         "NftAttributeTypeSymbol"
       ]
+    },
+    "model.NftDepositBonus": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "eligible_at": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/model.DepositBonusClaimStatus"
+        }
+      }
     },
     "model.NftImportSource": {
       "type": "string",
@@ -3606,7 +4116,10 @@
         "lucky_buy_loss",
         "loot_pack_gram",
         "loot_pack_payout",
-        "loot_pack_take_gift"
+        "loot_pack_take_gift",
+        "lucky_craft_win",
+        "lucky_craft_loss",
+        "lucky_craft_stake"
       ],
       "x-enum-varnames": [
         "UserActionTypePurchase",
@@ -3633,7 +4146,10 @@
         "UserActionLuckyBuyLossType",
         "UserActionLootPackGramType",
         "UserActionLootPackPayoutType",
-        "UserActionLootPackTakeGiftType"
+        "UserActionLootPackTakeGiftType",
+        "UserActionLuckyCraftWinType",
+        "UserActionLuckyCraftLossType",
+        "UserActionLuckyCraftStakeType"
       ]
     },
     "nft.AttributeFloorsMap": {

@@ -19,6 +19,41 @@ export interface MethodCase {
   value?: (value: unknown) => void;
 }
 
+const arenaRoom = {
+  roomId: 1,
+  mode: "classic",
+  minBetAmount: "0.1",
+  maxBetAmount: "100000",
+  allowGiftBets: true,
+  maxPlayersCount: 10000,
+  countdownDurationSeconds: 16,
+  game: {
+    id: 12345,
+    status: "countdown",
+    countdownEndsAt: 1761480030000,
+    playerCount: 2,
+    prizePool: "11.5",
+    bets: [
+      {
+        playerId: "anon:a1",
+        playerName: "Anon",
+        mine: false,
+        betType: "gift",
+        amount: "10",
+        createdAt: 1761480001000,
+      },
+      {
+        playerId: "user:42",
+        playerName: "bot",
+        mine: true,
+        betType: "ton",
+        amount: "1.5",
+        createdAt: 1761480002000,
+      },
+    ],
+  },
+};
+
 const config = {
   commission: "5",
   cooldown: 0,
@@ -29,6 +64,67 @@ const config = {
 };
 
 export const methodCases: MethodCase[] = [
+  {
+    name: "getArenaState",
+    operation: "getArenaState",
+    invoke: (c) => c.getArenaState(),
+    method: "GET",
+    path: "/partners/arena/state",
+    response: () =>
+      json({
+        serverTime: 1761480000000,
+        rooms: [arenaRoom, { ...arenaRoom, roomId: 2, game: null }],
+      }),
+    value: (v) => {
+      const state = v as schemas.ArenaStateResponse;
+      if (state.rooms[0].game?.bets[1].mine !== true) throw new Error("mine lost");
+      if (state.rooms[1].game !== null) throw new Error("null game lost");
+    },
+  },
+  {
+    name: "placeArenaBet",
+    operation: "postArenaBet",
+    invoke: (c) => c.placeArenaBet({ room_id: 1, bet_type: "gift", gift_ids: ["g1", "g2"] }),
+    method: "POST",
+    path: "/partners/arena/bet",
+    body: { room_id: 1, bet_type: "gift", gift_ids: ["g1", "g2"] },
+    response: () =>
+      json({
+        betId: "b1",
+        gameId: 12345,
+        acceptedAmount: "7.4",
+        serverTime: 1761480002500,
+        room: arenaRoom,
+      }),
+  },
+  {
+    name: "getArenaInventory",
+    operation: "getArenaInventory",
+    invoke: (c) => c.getArenaInventory({ limit: 150, offset: 150, sort_by: "price desc" }),
+    method: "GET",
+    path: "/partners/arena/inventory",
+    query: { limit: "150", offset: "150", sort_by: "price desc" },
+    response: () =>
+      json({
+        items: [
+          {
+            id: "g1",
+            name: "Vice Cream",
+            collection: "Vice Cream",
+            collectionId: "c1",
+            externalCollectionNumber: 7,
+            photoUrl: "https://example.com/g1.png",
+            price: "3.7",
+            attributes: [{ type: "model", value: "Cool", rarityPerMille: 10 }],
+            status: "unlisted",
+            hasAnimation: false,
+            importSource: "bot",
+            isCrafted: false,
+          },
+        ],
+        totalCount: 151,
+      }),
+  },
   {
     name: "createCollectionOffer",
     operation: "postCollectionOffers",

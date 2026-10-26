@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { isOk, PortalsMarketClient, schemas } from "../src";
+import { DEFAULT_MAX_RPS, isOk, PortalsMarketClient, schemas } from "../src";
 import { RateLimiter } from "../src/rate-limiter";
 import { json, recordingFetch } from "./helpers";
 
@@ -71,12 +71,49 @@ describe("RateLimiter", () => {
 });
 
 describe("PortalsMarketClient rate limiting", () => {
-  const floors = () => json({ floorPrices: {} });
+  const marketConfig = {
+    commission: "5",
+    cooldown: 0,
+    deposit_wallet: "x",
+    rub_course: "90",
+    usd_course: "3",
+    user_cashback: "0",
+  };
 
-  function createClient(rateLimiting: boolean, handler = floors) {
-    const rec = recordingFetch(handler);
-    const client = new PortalsMarketClient({ token: "test", rateLimiting, fetch: rec.fetch });
+  function createClient(
+    config: { rateLimiting?: boolean; maxRps?: number } = {},
+    headers: Record<string, string> = {},
+  ) {
+    const rec = recordingFetch(() => json(marketConfig, 200, headers));
+    const client = new PortalsMarketClient({
+      token: "test",
+      rateLimiting: true,
+      fetch: rec.fetch,
+      ...config,
+    });
     return { client, calls: rec.calls };
+  }
+
+  /** Делает `n` запросов подряд и проверяет, что следующий ждёт окна лимитера. */
+  async function expectWaitsAfter(client: PortalsMarketClient, calls: unknown[], n: number) {
+    const before = calls.length;
+    for (let i = 0; i < n; i++) {
+      await client.getMarketConfig();
+    }
+    expect(calls).toHaveLength(before + n);
+
+    let resolved = false;
+    const p = client.getMarketConfig().then((r) => {
+      resolved = true;
+      return r;
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(resolved).toBe(false);
+    expect(calls).toHaveLength(before + n);
+
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(isOk(await p)).toBe(true);
+    expect(calls).toHaveLength(before + n + 1);
   }
 
   beforeEach(() => {
@@ -87,129 +124,95 @@ describe("PortalsMarketClient rate limiting", () => {
     vi.useRealTimers();
   });
 
-  it("лимиты эндпоинтов взяты из описаний спеки", () => {
-    const limits = Object.fromEntries(
-      Object.entries(schemas.operations)
-        .filter(([, op]) => op.rateLimit !== undefined)
-        .map(([id, op]) => [id, op.rateLimit]),
+  it("спека без фиксированных лимитов: лимит задаёт тариф ключа", () => {
+    const limited = Object.entries(schemas.operations).filter(
+      ([, op]) => op.rateLimit !== undefined,
     );
-    expect(limits).toEqual({
-      postCollectionOffersBulkUpdate: 2,
-      getCollectionOffersAll: 10,
-      getCollectionOffersTop: 10,
-      getCollectionsAttributeFloors: 5,
-      getCollectionsBackdropsFloors: 2,
-      getCollectionsFloors: 9,
-      getCollectionsModelsBackgroundsFloors: 3,
-      getCollectionsMetrics: 8,
-      getNftsOwned: 6,
-      getNftsSearch: 15,
-    });
-    expect(schemas.GLOBAL_RATE_LIMIT).toBe(25);
+    expect(limited).toEqual([]);
+    expect(schemas.GLOBAL_RATE_LIMIT).toBeNull();
   });
 
-  it("эндпоинт-лимит: getBackdropFloors (2 req/s) ждёт на 3-м запросе", async () => {
-    const { client, calls } = createClient(true);
+  it(`до заголовка общий лимит ключа — DEFAULT_MAX_RPS (${DEFAULT_MAX_RPS} req/s)`, async () => {
+    const { client, calls } = createClient();
+    await expectWaitsAfter(client, calls, DEFAULT_MAX_RPS);
+  });
 
+  it("лимит ключа берётся из X-RateLimit-Limit и действует на все методы", async () => {
+    const { client, calls } = createClient({}, { "X-RateLimit-Limit": "5" });
+    await client.getMarketConfig();
+    await vi.advanceTimersByTimeAsync(1000);
+    for (let i = 0; i < 4; i++) await client.getNftStats();
+    await expectWaitsAfter(client, calls, 1);
+  });
+
+  it("лимит из заголовка одного эндпоинта не режет другие", async () => {
+    const rec = recordingFetch((call) =>
+      call.url.includes("/backdrops/floors")
+        ? json({ floorPrices: {} }, 200, { "X-RateLimit-Limit": "2" })
+        : json(marketConfig),
+    );
+    const client = new PortalsMarketClient({ token: "test", rateLimiting: true, fetch: rec.fetch });
+    await client.getBackdropFloors();
+    for (let i = 0; i < 10; i++) await client.getMarketConfig();
+    expect(rec.calls).toHaveLength(11);
+
+    // Лимит известен после первого ответа: дальше 2 запроса в окне, третий ждёт.
     await client.getBackdropFloors();
     await client.getBackdropFloors();
-    expect(calls).toHaveLength(2);
-
-    let thirdResolved = false;
-    const p = client.getBackdropFloors().then((r) => {
-      thirdResolved = true;
-      return r;
+    let third = false;
+    void client.getBackdropFloors().then(() => {
+      third = true;
     });
-
     await vi.advanceTimersByTimeAsync(0);
-    expect(thirdResolved).toBe(false);
-    expect(calls).toHaveLength(2);
-
+    expect(third).toBe(false);
     await vi.advanceTimersByTimeAsync(1000);
-    const r3 = await p;
-    expect(thirdResolved).toBe(true);
-    expect(isOk(r3)).toBe(true);
-    expect(calls).toHaveLength(3);
+    expect(third).toBe(true);
   });
 
-  it("bulkUpdateCollectionOffers ограничен 2 req/s", async () => {
-    const { client, calls } = createClient(true, () => json({ updated: [], failed: [] }));
-    const body = { offers: [{ id: "o1", amount: "1" }] };
-    await client.bulkUpdateCollectionOffers(body);
-    await client.bulkUpdateCollectionOffers(body);
-    const p = client.bulkUpdateCollectionOffers(body);
-    await vi.advanceTimersByTimeAsync(0);
-    expect(calls).toHaveLength(2);
-    await vi.advanceTimersByTimeAsync(1000);
-    await p;
-    expect(calls).toHaveLength(3);
+  it("некорректный X-RateLimit-Limit игнорируется", async () => {
+    const { client, calls } = createClient({}, { "X-RateLimit-Limit": "abc" });
+    await expectWaitsAfter(client, calls, DEFAULT_MAX_RPS);
   });
 
-  it("глобальный лимит: 25 req/s ждёт на 26-м запросе", async () => {
-    const { client, calls } = createClient(true, () =>
-      json({
-        commission: "5",
-        cooldown: 0,
-        deposit_wallet: "x",
-        rub_course: "90",
-        usd_course: "3",
-        user_cashback: "0",
-      }),
-    );
+  it("maxRps из конфига важнее заголовка", async () => {
+    const { client, calls } = createClient({ maxRps: 2 }, { "X-RateLimit-Limit": "5" });
+    await expectWaitsAfter(client, calls, 2);
+  });
 
-    for (let i = 0; i < 25; i++) {
-      await client.getMarketConfig();
+  it("некорректный maxRps отклоняется при создании клиента", () => {
+    for (const maxRps of [0, -1, 0.5, 2.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => createClient({ maxRps })).toThrow(TypeError);
     }
-    expect(calls).toHaveLength(25);
+  });
 
-    let resolved26 = false;
-    const p = client.getMarketConfig().then((r) => {
-      resolved26 = true;
-      return r;
+  it("лимит общий для всех эндпоинтов", async () => {
+    const { client, calls } = createClient({ maxRps: 2 });
+    await client.getMarketConfig();
+    await client.getNftStats();
+    let resolved = false;
+    void client.getWalletInfo().then(() => {
+      resolved = true;
     });
-
     await vi.advanceTimersByTimeAsync(0);
-    expect(resolved26).toBe(false);
-
-    await vi.advanceTimersByTimeAsync(1000);
-    await p;
-    expect(resolved26).toBe(true);
-    expect(calls).toHaveLength(26);
+    expect(resolved).toBe(false);
+    expect(calls).toHaveLength(2);
   });
 
   it("rateLimiting: false — не ждёт", async () => {
-    const { client, calls } = createClient(false);
+    const { client, calls } = createClient({ rateLimiting: false, maxRps: 1 });
     for (let i = 0; i < 5; i++) {
-      const r = await client.getBackdropFloors();
+      const r = await client.getMarketConfig();
       expect(isOk(r)).toBe(true);
     }
     expect(calls).toHaveLength(5);
   });
 
-  it("разные эндпоинты имеют отдельные лимиты", async () => {
-    const { client } = createClient(true, () =>
-      json({ updated_at: "2025-01-01", models: [], floorPrices: {} }),
-    );
-
-    await client.getBackdropFloors();
-    await client.getBackdropFloors();
-
-    let blockedResolved = false;
-    void client.getBackdropFloors().then(() => {
-      blockedResolved = true;
-    });
-
-    const attrOk = await client.getAttributeFloors();
-    expect(isOk(attrOk)).toBe(true);
-    expect(blockedResolved).toBe(false);
-  });
-
   it("ожидание лимитера прерывается signal → aborted", async () => {
-    const { client, calls } = createClient(true);
-    await client.getBackdropFloors();
-    await client.getBackdropFloors();
+    const { client, calls } = createClient({ maxRps: 2 });
+    await client.getMarketConfig();
+    await client.getMarketConfig();
     const controller = new AbortController();
-    const p = client.getBackdropFloors({ signal: controller.signal });
+    const p = client.getMarketConfig({ signal: controller.signal });
     await vi.advanceTimersByTimeAsync(10);
     controller.abort();
     const res = await p;

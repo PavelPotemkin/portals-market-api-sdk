@@ -555,8 +555,12 @@ class Generator {
       if (!this.enums.has(name)) throw new Error(`enumMembers: unknown enum ${name}`);
     }
 
-    const globalRate = /global limit of\s*(\d+)\s*req\/s/i.exec(this.spec.info?.description ?? "");
-    if (!globalRate) throw new Error("Global rate limit not found in info.description");
+    // Фиксированный глобальный лимит был в спеке до подписок; теперь лимит задаёт тариф ключа.
+    const description: string = this.spec.info?.description ?? "";
+    const globalRate = /global limit of\s*(\d+)\s*req\/s/i.exec(description);
+    if (!globalRate && !/max_rps of your subscription plan/i.test(description)) {
+      throw new Error("Rate limit model not found in info.description");
+    }
 
     const definitionMap = Object.keys(this.defs)
       .sort()
@@ -581,8 +585,8 @@ class Generator {
       `/** Версия спеки: \`info.version\`. */`,
       `export const SPEC_VERSION = ${str(this.spec.info?.version ?? "")};`,
       "",
-      "/** Глобальный лимит из описания спеки, req/s на токен. */",
-      `export const GLOBAL_RATE_LIMIT = ${Number(globalRate[1])};`,
+      "/** Глобальный лимит из описания спеки, req/s на токен; `null` — лимит задаёт тариф ключа. */",
+      `export const GLOBAL_RATE_LIMIT: number | null = ${globalRate ? Number(globalRate[1]) : "null"};`,
       "",
       "// ── Enums ──",
       "",

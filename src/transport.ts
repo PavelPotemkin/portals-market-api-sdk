@@ -7,6 +7,30 @@ import { err, ok, type Result } from "./result";
 export const DEFAULT_BASE_URL = "https://portal-market.com";
 export const DEFAULT_TIMEOUT_MS = 30_000;
 export const DEFAULT_RETRY = { maxRetries: 3, baseDelayMs: 1_000, maxDelayMs: 30_000 } as const;
+/**
+ * Общий лимит req/s на ключ, пока он неизвестен: нет `maxRps` в конфиге и ещё не было ответа
+ * с ним в заголовке. Прежний глобальный лимит Partner API.
+ */
+export const DEFAULT_MAX_RPS = 25;
+
+/**
+ * Эндпоинты, у которых до подписок был свой лимитер поверх общего: их `X-RateLimit-Limit` —
+ * лимит самого эндпоинта (market-backend partners_api/handler.go). У остальных заголовок
+ * ставит общий лимитер `/partners`, это лимит ключа.
+ */
+const ENDPOINT_LIMITED_OPERATIONS: ReadonlySet<OperationId> = new Set<OperationId>([
+  "getMarketActions",
+  "getNftsSearch",
+  "getNftsOwned",
+  "getCollectionsBackdropsFloors",
+  "getCollectionsModelsBackgroundsFloors",
+  "getCollectionsFloors",
+  "getCollectionsAttributeFloors",
+  "getCollectionsMetrics",
+  "getCollectionOffersTop",
+  "getCollectionOffersAll",
+  "postCollectionOffersBulkUpdate",
+]);
 
 /**
  * Необратимые операции с деньгами или гифтами. На 429 они не повторяются, а `retryable`
@@ -19,6 +43,7 @@ export const IRREVERSIBLE_OPERATIONS: ReadonlySet<OperationId> = new Set<Operati
   "postNftsTransfer", // transferGifts
   "postCollectionOffersAccept", // acceptCollectionOffer
   "postCollectionOffers", // createCollectionOffer
+  "postArenaBet", // placeArenaBet
 ]);
 
 export interface RetryConfig {
@@ -39,8 +64,16 @@ export interface PortalsClientConfig {
   fetch?: typeof globalThis.fetch;
   /** Таймаут одной HTTP-попытки, включая чтение тела, мс; `0` — без таймаута (default: 30000). */
   timeoutMs?: number;
-  /** In-memory лимиты из спеки: по эндпоинтам и глобальный (default: true). */
+  /**
+   * In-memory лимиты из заголовков `X-RateLimit-Limit` (default: true): общий на ключ и свой у
+   * эндпоинтов, где бэкенд держит отдельный лимит.
+   */
   rateLimiting?: boolean;
+  /**
+   * Общий лимит req/s на ключ, целое: `max_rps` тарифа подписки, лучше чуть ниже. Без него — из
+   * заголовка ответов, а до первого такого ответа — `DEFAULT_MAX_RPS`.
+   */
+  maxRps?: number;
   /** Повторы на 429. */
   retry?: RetryConfig;
 }
@@ -159,6 +192,9 @@ export class Transport {
   private readonly fetchImpl: typeof globalThis.fetch;
   private readonly timeoutMs: number;
   private readonly rateLimiting: boolean;
+  private readonly maxRps: number | undefined;
+  private observedKeyLimit: number | undefined;
+  private readonly endpointLimits = new Map<OperationId, number>();
   private readonly retry: Required<RetryConfig>;
   readonly rateLimiter = new RateLimiter();
 
@@ -179,6 +215,12 @@ export class Transport {
     this.fetchImpl = fetchImpl;
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.rateLimiting = config.rateLimiting ?? true;
+    if (config.maxRps !== undefined && !(Number.isInteger(config.maxRps) && config.maxRps > 0)) {
+      throw new TypeError(
+        `PortalsMarketClient: maxRps must be a positive integer, got ${config.maxRps}`,
+      );
+    }
+    this.maxRps = config.maxRps;
     this.retry = { ...DEFAULT_RETRY, ...stripUndefined(config.retry ?? {}) };
   }
 
@@ -258,10 +300,11 @@ export class Transport {
         if (userSignal?.aborted) return fail("aborted", "aborted by caller");
         if (this.rateLimiting) {
           try {
-            if (op.rateLimit !== undefined) {
-              await this.rateLimiter.wait(id, op.rateLimit, userSignal);
+            const endpointLimit = this.endpointLimits.get(id) ?? op.rateLimit;
+            if (endpointLimit !== undefined) {
+              await this.rateLimiter.wait(id, endpointLimit, userSignal);
             }
-            await this.rateLimiter.wait("__global__", GLOBAL_RATE_LIMIT, userSignal);
+            await this.rateLimiter.wait("__global__", this.keyRateLimit(), userSignal);
           } catch (cause) {
             return fail("aborted", "aborted by caller while waiting for rate limiter", { cause });
           }
@@ -300,6 +343,8 @@ export class Transport {
           userSignal?.removeEventListener("abort", onUserAbort);
         }
 
+        this.observeRateLimit(id, res.headers);
+
         if (res.status === 429 && attempts < maxAttempts) {
           const delay = retryDelayMs(res.headers.get("retry-after"), attempts, this.retry);
           try {
@@ -318,6 +363,21 @@ export class Transport {
     } catch (cause) {
       return fail("network", `unexpected error: ${String(cause)}`, { cause });
     }
+  }
+
+  private keyRateLimit(): number {
+    return this.maxRps ?? this.observedKeyLimit ?? GLOBAL_RATE_LIMIT ?? DEFAULT_MAX_RPS;
+  }
+
+  /**
+   * Заголовок пишет последний лимитер, через который прошёл запрос: у эндпоинта со своим
+   * лимитером это его лимит, у остальных — лимит ключа.
+   */
+  private observeRateLimit(id: OperationId, headers: Headers): void {
+    const value = Number(headers.get("x-ratelimit-limit"));
+    if (!Number.isInteger(value) || value <= 0) return;
+    if (ENDPOINT_LIMITED_OPERATIONS.has(id)) this.endpointLimits.set(id, value);
+    else this.observedKeyLimit = value;
   }
 
   private transportFailure(

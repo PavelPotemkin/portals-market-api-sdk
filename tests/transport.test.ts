@@ -329,9 +329,9 @@ describe("429: повторы", () => {
         times.push(Date.now());
         return i < 2 ? json({}, 429, { "retry-after": "0" }) : json({ floorPrices: {} });
       },
-      { rateLimiting: true, retry: { baseDelayMs: 1 } },
+      { rateLimiting: true, maxRps: 2, retry: { baseDelayMs: 1 } },
     );
-    // getBackdropFloors: 2 req/s; два 429 подряд, третья попытка ждёт окна лимитера.
+    // Лимит ключа 2 req/s; два 429 подряд, третья попытка ждёт окна лимитера.
     const p = client.getBackdropFloors();
     await vi.advanceTimersByTimeAsync(5000);
     expect((await p).ok).toBe(true);
@@ -353,6 +353,7 @@ describe("429: повторы", () => {
         "createCollectionOffer",
         (c) => c.createCollectionOffer({ collection_id: "c", amount: "1", max_nfts: 1 }),
       ],
+      ["placeArenaBet", (c) => c.placeArenaBet({ room_id: 1, bet_type: "ton", amount: "1" })],
     ];
     expect(IRREVERSIBLE_OPERATIONS.size).toBe(cases.length);
     for (const [name, call] of cases) {
@@ -412,5 +413,45 @@ describe("retryDelayMs", () => {
     expect(retryDelayMs(null, 3, retry, now, () => 1)).toBe(4000);
     expect(retryDelayMs(null, 10, retry, now, () => 1)).toBe(30_000);
     expect(retryDelayMs("3600", 1, retry, now, noJitter)).toBe(30_000);
+  });
+});
+
+describe("placeArenaBet", () => {
+  it("BET_OUTCOME_UNKNOWN: код сохраняется, ошибка не retryable", async () => {
+    const { client, calls } = makeClient(() =>
+      json({ code: "BET_OUTCOME_UNKNOWN", message: "bet outcome unknown" }, 504),
+    );
+    const e = expectErr(await client.placeArenaBet({ room_id: 1, bet_type: "ton", amount: "1" }));
+    expect(calls).toHaveLength(1);
+    expect(e.kind).toBe("http");
+    expect(e.status).toBe(504);
+    expect(e.code).toBe("BET_OUTCOME_UNKNOWN");
+    expect(e.retryable).toBe(false);
+  });
+
+  it("код ошибки Arena как в мини-аппе", async () => {
+    const { client } = makeClient(() =>
+      json({ code: "COUNTDOWN_TOO_CLOSE", message: "COUNTDOWN_TOO_CLOSE" }, 422),
+    );
+    const e = expectErr(await client.placeArenaBet({ room_id: 1, bet_type: "ton", amount: "1" }));
+    expect(e.code).toBe("COUNTDOWN_TOO_CLOSE");
+  });
+
+  it("тело проверяется до сети: ровно одно из amount и gift_ids, гифтов 1–50", async () => {
+    const { client, calls } = makeClient(() => json({}));
+    const bad = [
+      { room_id: 1, bet_type: "ton", amount: "1", gift_ids: ["g"] },
+      { room_id: 1, bet_type: "ton" },
+      { room_id: 1, bet_type: "gift", gift_ids: [] },
+      { room_id: 1, bet_type: "gift", gift_ids: Array.from({ length: 51 }, (_, i) => `g${i}`) },
+      { room_id: 1, bet_type: "dice", amount: "1" },
+      { room_id: 1, bet_type: "ton", gift_ids: ["g"] },
+      { room_id: 1, bet_type: "gift", amount: "1" },
+    ];
+    for (const body of bad) {
+      const e = expectErr(await client.placeArenaBet(body as never));
+      expect(e.kind, JSON.stringify(body)).toBe("request");
+    }
+    expect(calls).toHaveLength(0);
   });
 });

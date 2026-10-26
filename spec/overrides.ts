@@ -36,6 +36,19 @@ export interface SpecOverrides {
 const p = (path: string) => `/paths/${path.replaceAll("~", "~0").replaceAll("/", "~1")}`;
 const d = (name: string) => `/definitions/${name}`;
 
+/**
+ * Ответы Arena — зеркала Go-структур бэкенда игр, которые маркет отдаёт как есть
+ * (games-backend handler/model/partner_arena_model.go, InventoryItemResponse): поля без
+ * `omitempty` приходят всегда, nullable-поля — `null`. swag не пишет `required`.
+ */
+function arenaRequired(defs: Record<string, string[]>): SpecPatch[] {
+  return Object.entries(defs).map(([name, fields]) => ({
+    pointer: `${d(name)}/required`,
+    value: fields,
+    reason: `Поля ${name} без omitempty в Go-структуре бэкенда игр всегда есть в ответе.`,
+  }));
+}
+
 export const overrides: SpecOverrides = {
   patches: [
     {
@@ -155,9 +168,81 @@ export const overrides: SpecOverrides = {
       reason:
         "Бэкенд collection_preview.go: «sort order (asc|desc)», иначе сортировка сбрасывается.",
     },
+    {
+      pointer: `${d("httptrustedapps.arenaBetRequest")}/required`,
+      value: ["room_id", "bet_type"],
+      reason:
+        "Бэкенд partners_api/arena.go toGames: без room_id и bet_type ставка отклоняется 422.",
+    },
+    {
+      pointer: `${d("httptrustedapps.arenaBetRequest")}/x-exactly-one-of`,
+      value: ["amount", "gift_ids"],
+      reason:
+        "Ставка TON задаётся amount, ставка гифтами — gift_ids (arena.go toGames); " +
+        "второе поле бэкенд игнорирует, поэтому SDK требует ровно одно.",
+    },
+    {
+      pointer: `${d("httptrustedapps.arenaBetRequest")}/properties/gift_ids/minItems`,
+      value: 1,
+      reason: "Бэкенд arena.go toGames: gift_ids — от 1 до 50 id, иначе 422.",
+    },
+    {
+      pointer: `${d("httptrustedapps.arenaBetRequest")}/properties/gift_ids/maxItems`,
+      value: 50,
+      reason: "Бэкенд arena.go toGames: gift_ids — от 1 до 50 id (maxArenaBetGifts), иначе 422.",
+    },
+    ...arenaRequired({
+      "httptrustedapps.arenaStateResponse": ["serverTime", "rooms"],
+      "httptrustedapps.arenaRoom": [
+        "roomId",
+        "mode",
+        "minBetAmount",
+        "maxBetAmount",
+        "allowGiftBets",
+        "maxPlayersCount",
+        "countdownDurationSeconds",
+        "game",
+      ],
+      "httptrustedapps.arenaGame": ["id", "status", "playerCount", "prizePool", "bets"],
+      "httptrustedapps.arenaBet": [
+        "playerId",
+        "playerName",
+        "mine",
+        "betType",
+        "amount",
+        "createdAt",
+      ],
+      "httptrustedapps.arenaBetResponse": [
+        "betId",
+        "gameId",
+        "acceptedAmount",
+        "serverTime",
+        "room",
+      ],
+      "httptrustedapps.arenaInventoryResponse": ["items", "totalCount"],
+      "httptrustedapps.arenaInventoryItem": [
+        "id",
+        "name",
+        "collection",
+        "collectionId",
+        "externalCollectionNumber",
+        "photoUrl",
+        "price",
+        "attributes",
+        "status",
+        "hasAnimation",
+        "importSource",
+        "isCrafted",
+      ],
+      "httptrustedapps.arenaInventoryAttr": ["type", "value", "rarityPerMille"],
+    }),
   ],
 
   inlineEnums: {
+    "httptrustedapps.arenaBet.betType": "ArenaBetType",
+    "httptrustedapps.arenaBetRequest.bet_type": "ArenaBetType",
+    "httptrustedapps.arenaGame.status": "ArenaGameStatus",
+    "httptrustedapps.arenaRoom.mode": "ArenaRoomMode",
     "query:action_types": "MarketActionType",
     "query:period": "Period",
     "query:status": "ListingStatus",

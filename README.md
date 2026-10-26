@@ -49,7 +49,8 @@ const client = new PortalsMarketClient({
   baseUrl: "https://portal-market.com", // default; a path prefix is kept (https://proxy/x/api → https://proxy/x/api/partners/…)
   fetch: customFetch,                   // default: globalThis.fetch
   timeoutMs: 30_000,                    // default; per HTTP attempt incl. reading the body; 0 = no timeout
-  rateLimiting: true,                   // default; in-memory limits from the spec
+  rateLimiting: true,                   // default; in-memory limits: per key and per endpoint
+  maxRps: 4,                            // integer; per-key limit, your plan's max_rps or a bit below; default: from X-RateLimit-Limit
   retry: {
     maxRetries: 3,                      // default; retries after 429
     baseDelayMs: 1_000,                 // default; exponential backoff base when there is no Retry-After
@@ -58,7 +59,7 @@ const client = new PortalsMarketClient({
 });
 ```
 
-The constructor throws `TypeError` for an empty token, an invalid `baseUrl` or a missing `fetch` — that is
+The constructor throws `TypeError` for an empty token, an invalid `baseUrl`, a `maxRps` that is not a positive integer or a missing `fetch` — that is
 a programming error, not a runtime condition.
 
 Every method accepts an optional last argument:
@@ -116,22 +117,18 @@ There is one error class, `PortalsError extends Error`:
   HTTP-date) plus a small jitter, otherwise exponential backoff with jitter; each pause is capped by `retry.maxDelayMs`.
   Retries go through the rate limiter again. Other errors are returned immediately; use `retryable` to decide.
 - **Irreversible operations are never retried** and their errors always have `retryable: false`:
-  `buyNfts`, `withdrawGifts`, `withdrawTon`, `transferGifts`, `acceptCollectionOffer`, `createCollectionOffer`
-  (exported as `IRREVERSIBLE_OPERATIONS`). Other POSTs (`listNft`, `unlistNft`, `bulkListNfts`, `bulkUnlistNfts`,
+  `buyNfts`, `withdrawGifts`, `withdrawTon`, `transferGifts`, `acceptCollectionOffer`, `createCollectionOffer`,
+  `placeArenaBet` (exported as `IRREVERSIBLE_OPERATIONS`). Other POSTs (`listNft`, `unlistNft`, `bulkListNfts`, `bulkUnlistNfts`,
   `cancelCollectionOffer`, `bulkUpdateCollectionOffers`, `generateDepositId`) are retried on 429.
-- The in-memory limiter waits (it never fails) before each attempt. Limits come from the spec:
-
-| Method | Limit |
-| --- | --- |
-| `searchNfts` | 15 req/s |
-| `getTopCollectionOffer`, `getAllCollectionOffers` | 10 req/s |
-| `getCollectionFloors` | 9 req/s |
-| `getCollectionMetrics` | 8 req/s |
-| `getOwnedNfts` | 6 req/s |
-| `getAttributeFloors` | 5 req/s |
-| `getModelBackgroundFloors` | 3 req/s |
-| `getBackdropFloors`, `bulkUpdateCollectionOffers` | 2 req/s |
-| all requests (global) | 25 req/s |
+- The in-memory limiter waits (it never fails) before each attempt. With subscriptions the Partner API has one limit
+  per key across all endpoints: `max_rps` of the key's plan; exceeding it returns 429 `RATE_LIMITED`. Set `maxRps` to
+  your plan's limit, preferably a bit below it: the server counts fixed one-second windows, the SDK a sliding one, and
+  irreversible calls are not retried on 429. Without `maxRps` the per-key limit comes from `X-RateLimit-Limit`; until
+  the first response it is `DEFAULT_MAX_RPS` (25 req/s).
+- Deployments without subscriptions also limit some endpoints separately (for example 2 req/s on
+  `getBackdropFloors`); their own `X-RateLimit-Limit` limits only that endpoint. The first request to such an endpoint
+  goes out before its limit is known.
+- Read-only plans allow only GET requests; other methods return 403 `PARTNER_READ_ONLY`.
 
 The limiter state lives in one client instance: several clients or processes with the same token do not share it.
 Disable with `rateLimiting: false`.
@@ -175,6 +172,32 @@ await client.bulkUpdateCollectionOffers({ offers: [{ id: offerId, amount: "11", 
 
 `scope` query: `broad` — offers on the whole collection, `trait` — trait offers. The `scope` field of an offer lists
 its `models` / `backdrops` / `symbols`; empty or missing means a collection-wide offer.
+
+## Arena
+
+Methods act on behalf of the key's user, through the same path as an Arena bet in the mini app: the same limits,
+commission and error codes (`error.code`, e.g. `COUNTDOWN_TOO_CLOSE`, `INSUFFICIENT_BALANCE`, `GIFT_UNAVAILABLE`).
+Times are Unix milliseconds.
+
+```ts
+const state = await client.getArenaState(); // all rooms, the current game and its bets in order
+if (state.ok) {
+  const room = state.value.rooms[0];
+  const othersBet = room.game?.bets.some((b) => !b.mine);
+}
+
+const bet = await client.placeArenaBet({ room_id: 1, bet_type: "ton", amount: "10" });
+// or gifts: { room_id: 1, bet_type: "gift", gift_ids: ["…"] } — exactly one of amount / gift_ids, 1–50 gifts
+if (!bet.ok && (bet.error.kind !== "http" || (bet.error.status ?? 0) >= 500)) {
+  // BET_OUTCOME_UNKNOWN (504), any other 5xx (also from a proxy), network / timeout / aborted / parse / validation:
+  // the bet may have been placed. Check getArenaState() (`mine`) before trying again.
+}
+
+const inv = await client.getArenaInventory({ limit: 150, sort_by: "price desc" }); // `price` — Arena valuation
+```
+
+`placeArenaBet` is irreversible: it is never retried. There is no valuation of arbitrary gifts — only of your own
+gifts in `getArenaInventory`.
 
 ## Pagination
 
@@ -239,6 +262,9 @@ Options: `pageSize` (1..50), `maxPages`, `signal`, `timeoutMs`.
 
 | Method | Endpoint |
 | --- | --- |
+| `getArenaState()` | `GET /partners/arena/state` |
+| `placeArenaBet(body)` — exactly one of `amount` / `gift_ids` | `POST /partners/arena/bet` |
+| `getArenaInventory(params?)` | `GET /partners/arena/inventory` |
 | `createCollectionOffer(body)` | `POST /partners/collection-offers/` |
 | `bulkUpdateCollectionOffers(body)` | `POST /partners/collection-offers/bulk/update` |
 | `cancelCollectionOffer(body)` | `POST /partners/collection-offers/cancel` |

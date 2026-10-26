@@ -1,4 +1,4 @@
-import type { PortalsError } from "./errors";
+import { PortalsError } from "./errors";
 import {
   getAllOwnedNfts,
   iterateOwnedNfts,
@@ -9,11 +9,16 @@ import {
   type OwnedPortfolioParams,
   type PageOptions,
 } from "./pagination";
-import type { Result } from "./result";
+import { err, type Result } from "./result";
 import { type PortalsClientConfig, type RequestOptions, Transport } from "./transport";
 import type {
   AcceptOfferRequest,
   AllCollectionOffersParams,
+  ArenaBetRequest,
+  ArenaBetResponse,
+  ArenaInventoryParams,
+  ArenaInventoryResponse,
+  ArenaStateResponse,
   AttributeFloorsResponse,
   BackdropFloorsResponse,
   BulkDelistRequest,
@@ -74,6 +79,54 @@ export class PortalsMarketClient {
 
   constructor(config: PortalsClientConfig) {
     this.transport = new Transport(config);
+  }
+
+  // ── Arena ──
+
+  /**
+   * Все комнаты Arena одним ответом: настройки комнаты и текущая игра со ставками по порядку.
+   * Время — миллисекунды Unix; `serverTime` — время сервера для расчёта отсчёта.
+   */
+  getArenaState(options?: RequestOptions): R<ArenaStateResponse> {
+    return this.transport.call("getArenaState", {}, options);
+  }
+
+  /**
+   * Ставка в Arena от владельца ключа: TON (`amount`) или своими гифтами (`gift_ids`).
+   * Лимиты, комиссия и коды ошибок — как у ставки в мини-аппе.
+   *
+   * Необратимая операция: не повторяется на 429, `retryable` у ошибок всегда `false`.
+   * Код `BET_OUTCOME_UNKNOWN` (504), `network`, `timeout`, `aborted` и 5xx — исход неизвестен:
+   * сверяйтесь по `getArenaState` (`mine`) до повтора.
+   */
+  placeArenaBet(body: ArenaBetRequest, options?: RequestOptions): R<ArenaBetResponse> {
+    // Бэкенд читает только поле своего типа ставки; несовпадение отклоняем до сети.
+    const field =
+      body?.bet_type === "ton" ? "amount" : body?.bet_type === "gift" ? "gift_ids" : null;
+    if (field && (body as Record<string, unknown>)[field] == null) {
+      const message = `POST /partners/arena/bet: invalid body: bet_type ${body.bet_type} requires ${field}`;
+      return Promise.resolve(
+        err(
+          new PortalsError({
+            kind: "request",
+            method: "POST",
+            endpoint: "/partners/arena/bet",
+            message,
+            attempts: 0,
+            retryable: false,
+          }),
+        ),
+      );
+    }
+    return this.transport.call("postArenaBet", { body }, options);
+  }
+
+  /** Свои гифты с оценкой Arena (`price`), до 150 за запрос; `totalCount` — для страниц. */
+  getArenaInventory(
+    params?: ArenaInventoryParams,
+    options?: RequestOptions,
+  ): R<ArenaInventoryResponse> {
+    return this.transport.call("getArenaInventory", { query: params }, options);
   }
 
   // ── Collection Offers ──

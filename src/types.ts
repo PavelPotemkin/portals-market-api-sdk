@@ -54,6 +54,17 @@ export type TransferRecipientInfo = G.TransferRecipientInfo;
 export type WithdrawalStatus = G.WithdrawalStatus;
 /** Статус вывода TON. */
 export type TonWithdrawalStatusItem = G.FetchStatusByIdOut;
+/** Комната Arena с текущей игрой. */
+export type ArenaRoom = G.ArenaRoom;
+/** Текущая игра комнаты Arena: статус, отсчёт, банк и ставки по порядку. */
+export type ArenaGame = G.ArenaGame;
+/** Ставка в игре Arena; `mine` — ставка владельца ключа. */
+export type ArenaBet = G.ArenaBet;
+/** Свой гифт с оценкой Arena (`price`), как в инвентаре Arena мини-аппа. */
+export type ArenaInventoryItem = G.ArenaInventoryItem;
+export type ArenaInventoryAttribute = G.ArenaInventoryAttr;
+/** Бонус за депозит на NFT. */
+export type NftDepositBonus = G.NftDepositBonus;
 /** Тело ошибки бэкенда (`exerr.HttpError`). */
 export type ApiErrorBody = G.HttpError;
 
@@ -83,6 +94,22 @@ export type TransferGiftsRequest = Omit<G.TransferGiftsIn, "recipient" | "recipi
   );
 export type WithdrawGiftsRequest = G.WithdrawGiftsIn;
 export type WithdrawTonRequest = G.WithdrawIn;
+/** Ставка Arena: `bet_type: "ton"` с `amount` или `bet_type: "gift"` с `gift_ids` (1–50). */
+export type ArenaBetRequest = Omit<G.ArenaBetRequest, "bet_type" | "amount" | "gift_ids"> &
+  (
+    | {
+        bet_type: "ton";
+        /** Сумма ставки TON строкой. */
+        amount: string;
+        gift_ids?: never;
+      }
+    | {
+        bet_type: "gift";
+        /** ID своих гифтов. */
+        gift_ids: string[];
+        amount?: never;
+      }
+  );
 
 // ── Ответы ──
 
@@ -114,6 +141,9 @@ export type UserActionsResponse = G.FetchUserActionsOut;
 export type WalletInfoResponse = G.InfoOut;
 export type WithdrawTonResponse = G.WithdrawOut;
 export type WalletWithdrawalStatusesResponse = G.WithdrawStatusOut;
+export type ArenaStateResponse = G.ArenaStateResponse;
+export type ArenaBetResponse = G.ArenaBetResponse;
+export type ArenaInventoryResponse = G.ArenaInventoryResponse;
 
 // ── Query-параметры ──
 
@@ -125,3 +155,4 @@ export type CollectionMetricsParams = G.GetCollectionsMetricsQuery;
 export type CollectionsPreviewParams = G.GetCollectionsPreviewQuery;
 export type AllCollectionOffersParams = G.GetCollectionOffersAllQuery;
 export type TopCollectionOfferParams = G.GetCollectionOffersTopQuery;
+export type ArenaInventoryParams = G.GetArenaInventoryQuery;

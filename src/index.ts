@@ -3,10 +3,14 @@ export { type HttpMethod, PortalsError, type PortalsErrorKind } from "./errors";
 /** Все сгенерированные zod-схемы, enum-схемы и таблица операций спеки. */
 export * as schemas from "./generated";
 export {
+  ArenaBetType,
+  ArenaGameStatus,
+  ArenaRoomMode,
   BundleStatus,
   CollectionOfferScopeType,
   CollectionSortBy,
   CraftedStatus,
+  DepositBonusClaimStatus,
   InvalidNftReason,
   ListingStatus,
   MarketActionType,
@@ -39,6 +43,7 @@ export {
 export { type Err, err, isErr, isOk, type Ok, ok, type Result, unwrap } from "./result";
 export {
   DEFAULT_BASE_URL,
+  DEFAULT_MAX_RPS,
   DEFAULT_RETRY,
   DEFAULT_TIMEOUT_MS,
   IRREVERSIBLE_OPERATIONS,

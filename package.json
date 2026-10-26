@@ -1,6 +1,6 @@
 {
   "name": "@pavelpotemkin/portals-market-api-sdk",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Typed client for the Portals Market Partner API (generated zod schemas, Result-based errors, retries, rate limiting)",
   "license": "MIT",
   "repository": {

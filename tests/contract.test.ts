@@ -52,7 +52,7 @@ describe("схемы покрывают спеку", () => {
   const definitions = Object.entries<Record<string, unknown>>(spec.definitions);
 
   it(`все ${definitions.length} определений`, () => {
-    expect(definitions.length).toBe(82);
+    expect(definitions.length).toBe(93);
     expect(Object.keys(schemas.definitionSchemas).sort()).toEqual(
       definitions.map(([name]) => name).sort(),
     );
@@ -121,8 +121,8 @@ describe("схемы покрывают спеку", () => {
         expect(def.response === null, id).toBe(!responses[success as string].schema);
       }
     }
-    expect(seen.size).toBe(32);
-    expect(Object.keys(schemas.operations)).toHaveLength(32);
+    expect(seen.size).toBe(35);
+    expect(Object.keys(schemas.operations)).toHaveLength(35);
   });
 });
 
